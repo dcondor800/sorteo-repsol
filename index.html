@@ -375,13 +375,11 @@
     }
 
     @keyframes flipReveal {
-      0% { transform: rotateY(0deg); }
-      40% { transform: rotateY(0deg); }
-      50% { transform: rotateY(90deg); }
-      60% { transform: rotateY(180deg); }
+      0%   { transform: rotateY(0deg); }
+      40%  { transform: rotateY(0deg); }
+      50%  { transform: rotateY(90deg); }
+      60%  { transform: rotateY(180deg); }
       100% { transform: rotateY(180deg); }
-    }
-      to { transform: translateY(0); }
     }
 
     .assignment-list {
@@ -574,18 +572,15 @@
         <div id="teamsCountDisplay" class="readonly-field">9 equipos</div>
       </div>
 
-      
     </div>
 
     <div class="hint" id="hint"></div>
-
     <div class="error" id="error" style="display:none;"></div>
   </section>
 
   <section class="stack">
     <div class="card">
       <h2>Paises participantes</h2>
-      
 
       <div class="muted" style="margin-top:14px; margin-bottom:8px;">Países disponibles para el sorteo</div>
       <div id="countriesPreview" class="country-list"></div>
@@ -614,7 +609,7 @@
     </div>
 
     <div class="card" style="margin-top:30px;">
-  <h2>Resultados de la asignación</h2>
+      <h2>Resultados de la asignación</h2>
       <div id="result">
         <div class="empty-state">Aún no hay asignaciones generadas. Ingresa los equipos y presiona <strong>Asignar países</strong>.</div>
       </div>
@@ -623,37 +618,74 @@
 
   <script>
     const categoryConfig = {
-      futbol_masculino: { label: 'Futbol Masculino', teamCount: 9 },
-      futbol_femenino: { label: 'Futbol Femenino', teamCount: 3 },
-      voley_mixto: { label: 'Voley Mixto', teamCount: 10 },
-      padel: { label: 'Pádel', teamCount: 8 }
+      futbol_masculino: {
+        label: 'Futbol Masculino',
+        teamCount: 9,
+        countries: [
+          { name: 'Francia',       image: 'img/flags/francia.png' },
+          { name: 'España',        image: 'img/flags/espana.png' },
+          { name: 'Argentina',     image: 'img/flags/argentina.png' },
+          { name: 'Inglaterra',    image: 'img/flags/inglaterra.png' },
+          { name: 'Brasil',        image: 'img/flags/brasil.png' },
+          { name: 'Portugal',      image: 'img/flags/portugal.png' },
+          { name: 'Marruecos',     image: 'https://flagcdn.com/w160/ma.png' },
+          { name: 'Países Bajos',  image: 'img/flags/paises-bajos.png' },
+          { name: 'Ecuador',       image: 'img/flags/ecuador.png' }
+        ]
+      },
+      futbol_femenino: {
+        label: 'Futbol Femenino',
+        teamCount: 3,
+        countries: [
+          { name: 'Bélgica',   image: 'https://flagcdn.com/w160/be.png' },
+          { name: 'Alemania',  image: 'img/flags/alemania.png' },
+          { name: 'Colombia',  image: 'img/flags/colombia.png' }
+        ]
+      },
+      voley_mixto: {
+        label: 'Voley Mixto',
+        teamCount: 10,
+        countries: [
+          { name: 'Croacia',        image: 'https://flagcdn.com/w160/hr.png' },
+          { name: 'Uruguay',        image: 'https://flagcdn.com/w160/uy.png' },
+          { name: 'Suiza',          image: 'https://flagcdn.com/w160/ch.png' },
+          { name: 'México',         image: 'https://flagcdn.com/w160/mx.png' },
+          { name: 'Estados Unidos', image: 'https://flagcdn.com/w160/us.png' },
+          { name: 'Japón',          image: 'https://flagcdn.com/w160/jp.png' },
+          { name: 'Senegal',        image: 'https://flagcdn.com/w160/sn.png' },
+          { name: 'Irán',           image: 'https://flagcdn.com/w160/ir.png' },
+          { name: 'Corea del Sur',  image: 'https://flagcdn.com/w160/kr.png' },
+          { name: 'Perú',           image: 'https://flagcdn.com/w160/pe.png' }
+        ]
+      },
+      padel: {
+        label: 'Pádel',
+        teamCount: 8,
+        countries: [
+          { name: 'Austria',       image: 'https://flagcdn.com/w160/at.png' },
+          { name: 'Canadá',        image: 'https://flagcdn.com/w160/ca.png' },
+          { name: 'Australia',     image: 'https://flagcdn.com/w160/au.png' },
+          { name: 'Noruega',       image: 'https://flagcdn.com/w160/no.png' },
+          { name: 'Panamá',        image: 'https://flagcdn.com/w160/pa.png' },
+          { name: 'Arabia Saudí',  image: 'https://flagcdn.com/w160/sa.png' },
+          { name: 'Paraguay',      image: 'https://flagcdn.com/w160/py.png' },
+          { name: 'Suecia',        image: 'https://flagcdn.com/w160/se.png' }
+        ]
+      }
     };
-
-    const AVAILABLE_COUNTRIES = [
-      { name: 'Francia', image: 'img/flags/francia.png' },
-      { name: 'España', image: 'img/flags/espana.png' },
-      { name: 'Argentina', image: 'img/flags/argentina.png' },
-      { name: 'Inglaterra', image: 'img/flags/inglaterra.png' },
-      { name: 'Brasil', image: 'img/flags/brasil.png' },
-      { name: 'Portugal', image: 'img/flags/portugal.png' },
-      { name: 'Alemania', image: 'img/flags/alemania.png' },
-      { name: 'Colombia', image: 'img/flags/colombia.png' },
-      { name: 'Países Bajos', image: 'img/flags/paises-bajos.png' },
-      { name: 'Ecuador', image: 'img/flags/ecuador.png' }
-    ];
 
     const ANIMATION_DURATION = 4000;
 
-    const categoryEl = document.getElementById('category');
+    const categoryEl        = document.getElementById('category');
     const teamsCountDisplayEl = document.getElementById('teamsCountDisplay');
-    const assignBtn = document.getElementById('assignBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const hintEl = document.getElementById('hint');
-    const errorEl = document.getElementById('error');
-    const bulkNamesEl = document.getElementById('bulkNames');
-    const resultEl = document.getElementById('result');
-    const loadingEl = document.getElementById('loading');
-    const flipStageEl = document.getElementById('flipStage');
+    const assignBtn         = document.getElementById('assignBtn');
+    const resetBtn          = document.getElementById('resetBtn');
+    const hintEl            = document.getElementById('hint');
+    const errorEl           = document.getElementById('error');
+    const bulkNamesEl       = document.getElementById('bulkNames');
+    const resultEl          = document.getElementById('result');
+    const loadingEl         = document.getElementById('loading');
+    const flipStageEl       = document.getElementById('flipStage');
     const countriesPreviewEl = document.getElementById('countriesPreview');
 
     function getCurrentCategoryConfig() {
@@ -721,8 +753,8 @@
       teamsCountDisplayEl.textContent = `${teamCount} equipos`;
     }
 
-    function renderCountriesPreview() {
-      countriesPreviewEl.innerHTML = AVAILABLE_COUNTRIES
+    function renderCountriesPreview(countries) {
+      countriesPreviewEl.innerHTML = countries
         .map(country => `
           <div class="country-card">
             <img class="country-flag" src="${country.image}" alt="Bandera de ${country.name}">
@@ -734,10 +766,6 @@
 
     function validateTeams(teamCount, names) {
       const errors = [];
-
-      if (teamCount > AVAILABLE_COUNTRIES.length) {
-        errors.push('• No hay suficientes países disponibles para hacer la asignación sin repetir.');
-      }
 
       if (names.length !== teamCount) {
         errors.push(`• Debes ingresar exactamente ${teamCount} nombres. Actualmente hay ${names.length}.`);
@@ -770,11 +798,11 @@
 
     function assignCountries(teams, countries) {
       const shuffledTeams = shuffle(teams);
-      const selectedCountries = shuffle(countries).slice(0, teams.length);
+      const shuffledCountries = shuffle(countries);
 
       return shuffledTeams.map((team, index) => ({
         team,
-        country: selectedCountries[index]
+        country: shuffledCountries[index]
       }));
     }
 
@@ -790,8 +818,6 @@
           </div>
         </div>
       `).join('');
-
-      
 
       resultEl.innerHTML = `
         <div class="summary">
@@ -820,8 +846,8 @@
       `).join('');
     }
 
-    function prepareDrawAnimation() {
-      flipStageEl.innerHTML = buildFlipCards(AVAILABLE_COUNTRIES);
+    function prepareDrawAnimation(countries) {
+      flipStageEl.innerHTML = buildFlipCards(countries);
     }
 
     function applyCategorySettings() {
@@ -831,6 +857,7 @@
       const config = getCurrentCategoryConfig();
       updateTeamsCountDisplay(config.teamCount);
       syncTextareaWithCount(config.teamCount);
+      renderCountriesPreview(config.countries);
       hintEl.textContent = `Categoría seleccionada: ${config.label}. Debes registrar ${config.teamCount} equipos y se asignarán ${config.teamCount} países al azar.`;
       resetResults();
     }
@@ -852,12 +879,12 @@
       }
 
       startAnimationState();
-      prepareDrawAnimation();
+      prepareDrawAnimation(config.countries);
       resultEl.innerHTML = '';
       hintEl.textContent = 'Preparando la asignación de países...';
 
       window.setTimeout(() => {
-        const assignments = assignCountries(names, AVAILABLE_COUNTRIES);
+        const assignments = assignCountries(names, config.countries);
 
         hintEl.textContent = `Asignación completada: ${assignments.length} equipos recibieron un país distinto.`;
         stopAnimationState();
@@ -876,7 +903,7 @@
     assignBtn.addEventListener('click', assignCountriesToTeams);
     resetBtn.addEventListener('click', resetAll);
 
-    renderCountriesPreview();
+    renderCountriesPreview(getCurrentCategoryConfig().countries);
     applyCategorySettings();
   </script>
 </body>
