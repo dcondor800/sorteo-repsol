@@ -1,0 +1,532 @@
+/* =====================================================================
+   ESTILOS GLOBALES — sorteo-paises.css
+   Variables CSS, layout general, componentes reutilizables y animaciones.
+   Todo el diseño usa una paleta de azules oscuros con tarjetas blancas
+   semitransparentes.
+====================================================================== */
+
+/* --- Variables de diseño: colores, sombras y radios reutilizables --- */
+:root {
+  --bg1: #062c4f;
+  --bg2: #0a3d6b;
+  --bg3: #0f4c81;
+  --card: #ffffff;
+  --border: #d8e1ea;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --accent: #00bcd4;
+  --shadow: 0 12px 32px rgba(0,0,0,.18);
+  --radius: 18px;
+}
+
+/* --- Reset de box-model para todos los elementos --- */
+* { box-sizing: border-box; }
+
+/* --- Cuerpo: fondo degradado azul, centrado y con padding --- */
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, system-ui, Arial, sans-serif;
+  color: var(--text);
+  background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 50%, var(--bg3) 100%);
+  max-width: 1000px;
+  margin-inline: auto;
+  padding: 28px 16px 40px;
+}
+
+/* --- Banner superior: contiene la imagen de Repsol --- */
+.top-banner {
+  width: 100%;
+  margin: 0 0 22px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.top-banner__image {
+  width: 100%;
+  max-width: 1000px;
+  display: block;
+  border-radius: 22px;
+  box-shadow: 0 14px 34px rgba(0,0,0,.22);
+  object-fit: cover;
+}
+
+/* --- Hero: título principal y badge de categoría deportiva --- */
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  color: #fff;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(28px, 5vw, 42px);
+  line-height: 1.05;
+  font-weight: 900;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  margin-top: 8px;
+  color: rgba(255,255,255,.82);
+  max-width: 720px;
+}
+
+/* --- Badge: pastilla con iconos de deportes --- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.18);
+  backdrop-filter: blur(8px);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* --- Panel y Card: contenedores blancos con sombra y blur --- */
+.panel,
+.card {
+  background: rgba(255,255,255,.96);
+  border: 1px solid rgba(255,255,255,.45);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.panel {
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+/* --- Row: cuadrícula de 3 columnas para los controles del panel --- */
+.row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+/* --- Field: envuelve label + control en columna --- */
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Etiquetas de formulario en mayúsculas compactas --- */
+label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 6px;
+  font-weight: 800;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+}
+
+/* --- Fuente heredada para todos los controles de formulario --- */
+select, input, textarea, button {
+  font-family: inherit;
+}
+
+/* --- Estilos base para inputs interactivos --- */
+select, input, textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 15px;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+/* --- Foco: borde acento y halo de color --- */
+select:focus, input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(0,188,212,.14);
+}
+
+/* --- Textarea: alto mínimo y redimensionable en vertical --- */
+textarea {
+  min-height: 220px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* --- Campo de sólo lectura (muestra el conteo de equipos) --- */
+.readonly-field {
+  display: flex;
+  align-items: center;
+  min-height: 47px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* --- Contenedor de botones en fila --- */
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* --- Estilos base de todos los botones: sombra y micro-animación --- */
+button {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  color: #fff;
+  transition: transform .08s ease, box-shadow .15s ease, opacity .15s ease, filter .15s ease;
+  box-shadow: 0 10px 18px rgba(0,0,0,.14);
+}
+
+button:hover  { transform: translateY(-1px); }
+button:active { transform: translateY(0); }
+button:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+  transform: none;
+  filter: grayscale(.15);
+  box-shadow: none;
+}
+
+/* --- Colores individuales de cada botón --- */
+#assignBtn  { background: linear-gradient(135deg, #22c55e, #16a34a); }
+#resetBtn   { background: linear-gradient(135deg, #64748b, #475569); }
+
+/* --- Botón de descarga: oculto por defecto, se muestra con .visible --- */
+#downloadBtn {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  display: none;
+  margin-top: 16px;
+  width: 100%;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+#downloadBtn.visible { display: flex; }
+
+/* --- Stack: columna única para las cards de contenido --- */
+.stack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.card { padding: 18px; }
+
+.card h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: .3px;
+  color: #0f172a;
+}
+
+/* --- Texto secundario atenuado --- */
+.muted {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* --- Mensajes de estado: hint (info), error y loading --- */
+.hint, .error, .loading {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: pre-line;
+}
+
+.hint    { background: #ecfeff; border: 1px solid #a5f3fc; color: #0f766e; }
+.error   { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+.loading { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+
+/* --- Cabecera del loading: spinner + textos --- */
+.loading-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.loading-title    { font-weight: 800; margin-bottom: 2px; }
+.loading-subtitle { font-size: 13px; color: #1e40af; }
+
+/* --- Spinner giratorio animado --- */
+.spinner {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 3px solid #bfdbfe;
+  border-top-color: #2563eb;
+  animation: spin .8s linear infinite;
+  flex: 0 0 auto;
+}
+
+/* --- Máquina de sorteo: contenedor de las flip cards --- */
+.draw-machine {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #dbeafe, #eff6ff);
+  border: 1px solid #bfdbfe;
+  padding: 18px;
+}
+
+/* --- Grilla de flip cards dentro de la máquina --- */
+.flip-stage {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  align-items: center;
+}
+
+/* --- Tarjeta 3D con perspectiva para el efecto flip --- */
+.flip-card {
+  perspective: 1000px;
+  min-height: 170px;
+}
+
+/* --- Elemento interno que rota: contiene cara frontal y trasera --- */
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 170px;
+  transform-style: preserve-3d;
+  animation: flipReveal 1.2s ease-in-out infinite;
+}
+
+/* --- Delays escalonados para que las tarjetas no giren al mismo tiempo --- */
+.flip-card:nth-child(2) .flip-card-inner { animation-delay: .12s; }
+.flip-card:nth-child(3) .flip-card-inner { animation-delay: .24s; }
+.flip-card:nth-child(4) .flip-card-inner { animation-delay: .36s; }
+.flip-card:nth-child(5) .flip-card-inner { animation-delay: .48s; }
+
+/* --- Cara genérica: absolute, oculta la cara contraria con backface-visibility --- */
+.flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 14px;
+  box-shadow: 0 10px 24px rgba(15,23,42,.16);
+}
+
+/* --- Cara frontal: oscura, muestra "País oculto" --- */
+.flip-face.front {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #f8fafc;
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+/* --- Cara trasera: blanca, muestra la bandera y nombre del país --- */
+.flip-face.back {
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #bfdbfe;
+  transform: rotateY(180deg); /* pre-rotada, visible al girar 180° */
+}
+
+.flip-icon  { font-size: 30px; margin-bottom: 8px; }
+.flip-title { font-size: 14px; font-weight: 900; letter-spacing: .4px; text-transform: uppercase; }
+
+/* --- Bandera pequeña en la cara trasera de la flip card --- */
+.flip-flag {
+  width: 88px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #dbeafe;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,.10);
+  margin-bottom: 10px;
+}
+
+.flip-country { font-size: 14px; font-weight: 800; line-height: 1.2; color: #1e3a8a; }
+
+/* --- Animaciones de keyframes --- */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Efecto de volteo: pausa en frontal (0-40%), gira (40-60%), pausa en trasera (60-100%) */
+@keyframes flipReveal {
+  0%   { transform: rotateY(0deg); }
+  40%  { transform: rotateY(0deg); }
+  50%  { transform: rotateY(90deg); }
+  60%  { transform: rotateY(180deg); }
+  100% { transform: rotateY(180deg); }
+}
+
+/* --- Lista de tarjetas de asignación final --- */
+.assignment-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+/* --- Tarjeta de asignación: número | equipo | flecha | país --- */
+.assignment-card {
+  display: grid;
+  grid-template-columns: 72px 1.3fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+  box-shadow: 0 10px 24px rgba(15,23,42,.08);
+}
+
+.assignment-number {
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: #1d4ed8;
+  background: #e0f2fe;
+  padding: 10px 8px;
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid #bae6fd;
+}
+
+.assignment-team,
+.assignment-country {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  font-weight: 800;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #0f172a;
+}
+
+.assignment-country {
+  gap: 10px;
+  flex-direction: column;
+  padding: 14px;
+}
+
+/* --- Bandera grande en el resultado de asignación --- */
+.assignment-country img {
+  width: 120px;
+  height: 75px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: none;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,.18);
+}
+
+.assignment-country-name { font-size: 14px; font-weight: 800; line-height: 1.2; color: #0f172a; }
+.assignment-arrow        { font-size: 18px; font-weight: 900; color: #0ea5e9; letter-spacing: 1px; padding: 8px 10px; }
+
+/* --- Estado vacío: mostrado antes de generar resultados --- */
+.empty-state {
+  padding: 20px;
+  text-align: center;
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  color: #64748b;
+  background: #f8fafc;
+}
+
+/* --- Resumen en pastillas sobre los resultados --- */
+.summary {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  margin-bottom: 14px;
+}
+
+.pill {
+  background: #e0f2fe;
+  color: #075985;
+  border: 1px solid #bae6fd;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* --- Grilla de banderas de países disponibles --- */
+.country-list {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.country-card {
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  min-height: 140px;
+}
+
+.country-flag {
+  width: 100px;
+  height: 65px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 3px solid #dbeafe;
+  box-shadow: 0 4px 12px rgba(0,0,0,.10);
+  background: #fff;
+}
+
+.country-name { font-size: 13px; font-weight: 800; color: #1d4ed8; }
+
+/* --- Responsive: tablet y móvil --- */
+@media (max-width: 900px) {
+  .row { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 620px) {
+  .hero           { flex-direction: column; align-items: flex-start; }
+  .row            { grid-template-columns: 1fr; }
+  .actions        { flex-direction: column; }
+  button          { width: 100%; }
+  .assignment-card    { grid-template-columns: 1fr; text-align: center; }
+  .assignment-number  { width: 100%; }
+  .assignment-arrow   { justify-self: center; }
+  .draw-machine       { height: 170px; }
+}
