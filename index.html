@@ -197,6 +197,16 @@
 
     #assignBtn { background: linear-gradient(135deg, #22c55e, #16a34a); }
     #resetBtn { background: linear-gradient(135deg, #64748b, #475569); }
+    #downloadBtn {
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      display: none;
+      margin-top: 16px;
+      width: 100%;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+    }
+    #downloadBtn.visible { display: flex; }
 
     .stack {
       display: grid;
@@ -613,9 +623,11 @@
       <div id="result">
         <div class="empty-state">Aún no hay asignaciones generadas. Ingresa los equipos y presiona <strong>Asignar países</strong>.</div>
       </div>
+      <button id="downloadBtn" type="button">⬇ Descargar resultados en Excel</button>
     </div>
   </section>
 
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script>
     const categoryConfig = {
       futbol_masculino: {
@@ -687,6 +699,10 @@
     const loadingEl         = document.getElementById('loading');
     const flipStageEl       = document.getElementById('flipStage');
     const countriesPreviewEl = document.getElementById('countriesPreview');
+    const downloadBtn        = document.getElementById('downloadBtn');
+
+    let lastAssignments = null;
+    let lastCategoryLabel = '';
 
     function getCurrentCategoryConfig() {
       return categoryConfig[categoryEl.value];
@@ -807,6 +823,10 @@
     }
 
     function renderAssignments(assignments, totalTeams, categoryLabel) {
+      lastAssignments = assignments;
+      lastCategoryLabel = categoryLabel;
+      downloadBtn.classList.add('visible');
+
       const cardsHtml = assignments.map((item, index) => `
         <div class="assignment-card">
           <div class="assignment-number">Equipo ${index + 1}</div>
@@ -826,6 +846,85 @@
         </div>
         <div class="assignment-list">${cardsHtml}</div>
       `;
+    }
+
+    function downloadExcel() {
+      if (!lastAssignments) return;
+
+      const fecha = new Date().toLocaleDateString('es-ES');
+
+      function c(v, s) { return { v, t: 's', s }; }
+
+      const border = { top: { style: 'thin', color: { rgb: 'BFDBFE' } }, bottom: { style: 'thin', color: { rgb: 'BFDBFE' } }, left: { style: 'thin', color: { rgb: 'BFDBFE' } }, right: { style: 'thin', color: { rgb: 'BFDBFE' } } };
+
+      const S = {
+        title: {
+          fill: { patternType: 'solid', fgColor: { rgb: '062C4F' } },
+          font: { color: { rgb: 'FFFFFF' }, bold: true, sz: 14, name: 'Arial' },
+          alignment: { horizontal: 'left', vertical: 'center' }
+        },
+        subtitle: {
+          fill: { patternType: 'solid', fgColor: { rgb: '0A3D6B' } },
+          font: { color: { rgb: '93C5FD' }, sz: 10, name: 'Arial' },
+          alignment: { horizontal: 'left', vertical: 'center' }
+        },
+        headerNum: {
+          fill: { patternType: 'solid', fgColor: { rgb: '0F172A' } },
+          font: { color: { rgb: 'FFFFFF' }, bold: true, sz: 11, name: 'Arial' },
+          alignment: { horizontal: 'center', vertical: 'center' }
+        },
+        headerText: {
+          fill: { patternType: 'solid', fgColor: { rgb: '0F172A' } },
+          font: { color: { rgb: 'FFFFFF' }, bold: true, sz: 11, name: 'Arial' },
+          alignment: { horizontal: 'left', vertical: 'center' }
+        },
+        footer: {
+          fill: { patternType: 'solid', fgColor: { rgb: 'E0F2FE' } },
+          font: { color: { rgb: '075985' }, sz: 10, name: 'Arial', italic: true },
+          alignment: { horizontal: 'center', vertical: 'center' }
+        }
+      };
+
+      function rowStyles(i) {
+        const rgb = i % 2 === 0 ? 'DBEAFE' : 'F8FAFC';
+        const base = { fill: { patternType: 'solid', fgColor: { rgb } }, font: { sz: 11, name: 'Arial' }, border };
+        return {
+          num:     { ...base, font: { ...base.font, bold: true, color: { rgb: '1D4ED8' } }, alignment: { horizontal: 'center', vertical: 'center' } },
+          team:    { ...base, font: { ...base.font, bold: true, color: { rgb: '0F172A' } }, alignment: { horizontal: 'left',   vertical: 'center' } },
+          country: { ...base, font: { ...base.font, bold: true, color: { rgb: '0F172A' } }, alignment: { horizontal: 'left',   vertical: 'center' } }
+        };
+      }
+
+      const aoa = [
+        [c(`SORTEO DE PAÍSES — ${lastCategoryLabel.toUpperCase()}`, S.title),    c('', S.title),    c('', S.title)],
+        [c(`Fecha: ${fecha}   |   Total equipos: ${lastAssignments.length}`, S.subtitle), c('', S.subtitle), c('', S.subtitle)],
+        [c('#', S.headerNum), c('Equipo', S.headerText), c('País Asignado', S.headerText)],
+        ...lastAssignments.map((item, i) => {
+          const rs = rowStyles(i);
+          return [c(`Equipo ${i + 1}`, rs.num), c(item.team, rs.team), c(item.country.name, rs.country)];
+        }),
+        [c('Generado por Dinámica Oficial Repsol', S.footer), c('', S.footer), c('', S.footer)]
+      ];
+
+      const WB = XLSX.utils.book_new();
+      const WS = XLSX.utils.aoa_to_sheet(aoa);
+
+      const lastRow = lastAssignments.length + 3;
+      WS['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } },
+        { s: { r: lastRow, c: 0 }, e: { r: lastRow, c: 2 } }
+      ];
+
+      WS['!cols'] = [{ wch: 14 }, { wch: 32 }, { wch: 26 }];
+      WS['!rows'] = [
+        { hpt: 28 }, { hpt: 18 }, { hpt: 22 },
+        ...lastAssignments.map(() => ({ hpt: 20 })),
+        { hpt: 16 }
+      ];
+
+      XLSX.utils.book_append_sheet(WB, WS, 'Sorteo');
+      XLSX.writeFile(WB, `sorteo-paises-${lastCategoryLabel.toLowerCase().replace(/\s+/g, '-')}.xlsx`);
     }
 
     function buildFlipCards(countries) {
@@ -894,6 +993,9 @@
 
     function resetAll() {
       bulkNamesEl.value = '';
+      lastAssignments = null;
+      lastCategoryLabel = '';
+      downloadBtn.classList.remove('visible');
       stopAnimationState();
       applyCategorySettings();
       hideError();
@@ -902,6 +1004,7 @@
     categoryEl.addEventListener('change', applyCategorySettings);
     assignBtn.addEventListener('click', assignCountriesToTeams);
     resetBtn.addEventListener('click', resetAll);
+    downloadBtn.addEventListener('click', downloadExcel);
 
     renderCountriesPreview(getCurrentCategoryConfig().countries);
     applyCategorySettings();
