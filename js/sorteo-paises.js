@@ -2,23 +2,22 @@
 // CONFIGURACIÓN DE CATEGORÍAS
 // Cada categoría define su etiqueta, número de equipos requeridos y
 // la lista de países con nombre e imagen de bandera.
-// Las banderas locales usan rutas relativas; las nuevas se sirven desde
-// flagcdn.com (CDN público de banderas por código ISO).
+// Todas las banderas se sirven desde flagcdn.com usando el código ISO del país.
 // =========================================================================
 const categoryConfig = {
   futbol_masculino: {
     label: 'Futbol Masculino',
     teamCount: 9,
     countries: [
-      { name: 'Francia',       image: 'img/flags/francia.png' },
-      { name: 'España',        image: 'img/flags/espana.png' },
-      { name: 'Argentina',     image: 'img/flags/argentina.png' },
-      { name: 'Inglaterra',    image: 'img/flags/inglaterra.png' },
-      { name: 'Brasil',        image: 'img/flags/brasil.png' },
-      { name: 'Portugal',      image: 'img/flags/portugal.png' },
+      { name: 'Francia',       image: 'https://flagcdn.com/w160/fr.png' },
+      { name: 'España',        image: 'https://flagcdn.com/w160/es.png' },
+      { name: 'Argentina',     image: 'https://flagcdn.com/w160/ar.png' },
+      { name: 'Inglaterra',    image: 'https://flagcdn.com/w160/gb-eng.png' },
+      { name: 'Brasil',        image: 'https://flagcdn.com/w160/br.png' },
+      { name: 'Portugal',      image: 'https://flagcdn.com/w160/pt.png' },
       { name: 'Marruecos',     image: 'https://flagcdn.com/w160/ma.png' },
-      { name: 'Países Bajos',  image: 'img/flags/paises-bajos.png' },
-      { name: 'Ecuador',       image: 'img/flags/ecuador.png' }
+      { name: 'Países Bajos',  image: 'https://flagcdn.com/w160/nl.png' },
+      { name: 'Ecuador',       image: 'https://flagcdn.com/w160/ec.png' }
     ]
   },
   futbol_femenino: {
@@ -26,8 +25,8 @@ const categoryConfig = {
     teamCount: 3,
     countries: [
       { name: 'Bélgica',   image: 'https://flagcdn.com/w160/be.png' },
-      { name: 'Alemania',  image: 'img/flags/alemania.png' },
-      { name: 'Colombia',  image: 'img/flags/colombia.png' }
+      { name: 'Alemania',  image: 'https://flagcdn.com/w160/de.png' },
+      { name: 'Colombia',  image: 'https://flagcdn.com/w160/co.png' }
     ]
   },
   voley_mixto: {
@@ -48,7 +47,7 @@ const categoryConfig = {
   },
   padel: {
     label: 'Pádel',
-    teamCount: 8,
+    teamCount: 10,
     countries: [
       { name: 'Austria',       image: 'https://flagcdn.com/w160/at.png' },
       { name: 'Canadá',        image: 'https://flagcdn.com/w160/ca.png' },
@@ -57,7 +56,9 @@ const categoryConfig = {
       { name: 'Panamá',        image: 'https://flagcdn.com/w160/pa.png' },
       { name: 'Arabia Saudí',  image: 'https://flagcdn.com/w160/sa.png' },
       { name: 'Paraguay',      image: 'https://flagcdn.com/w160/py.png' },
-      { name: 'Suecia',        image: 'https://flagcdn.com/w160/se.png' }
+      { name: 'Suecia',        image: 'https://flagcdn.com/w160/se.png' },
+      { name: 'Egipto',        image: 'https://flagcdn.com/w160/eg.png' },
+      { name: 'Turquía',       image: 'https://flagcdn.com/w160/tr.png' }
     ]
   }
 };
@@ -85,6 +86,25 @@ const downloadBtn         = document.getElementById('downloadBtn');
 // Variables de estado global: guardan el último sorteo para poder descargarlo
 let lastAssignments   = null;  // Array de { team, country } del sorteo más reciente
 let lastCategoryLabel = '';    // Nombre de la categoría del sorteo más reciente
+
+// =========================================================================
+// MANEJO DE ERROR EN CARGA DE IMÁGENES
+// Se llama desde onerror en cualquier <img> de bandera.
+// Evita el bucle infinito anulando onerror, oculta la imagen rota
+// y muestra un placeholder neutro con un emoji de bandera.
+// =========================================================================
+const FLAG_PLACEHOLDER = 'data:image/svg+xml,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="100" viewBox="0 0 160 100">' +
+  '<rect width="160" height="100" fill="#e2e8f0" rx="8"/>' +
+  '<text x="80" y="58" font-size="40" text-anchor="middle" fill="#94a3b8">🏳</text>' +
+  '</svg>'
+);
+
+function flagError(img) {
+  img.onerror = null;           // evitar bucle infinito si el placeholder falla
+  img.src     = FLAG_PLACEHOLDER;
+  img.style.opacity = '0.55';
+}
 
 // =========================================================================
 // FUNCIONES DE UTILIDAD
@@ -176,7 +196,7 @@ function renderCountriesPreview(countries) {
   countriesPreviewEl.innerHTML = countries
     .map(country => `
       <div class="country-card">
-        <img class="country-flag" src="${country.image}" alt="Bandera de ${country.name}">
+        <img class="country-flag" src="${country.image}" alt="Bandera de ${country.name}" onerror="flagError(this)">
         <div class="country-name">${country.name}</div>
       </div>
     `)
@@ -266,7 +286,7 @@ function renderAssignments(assignments, totalTeams, categoryLabel) {
       <div class="assignment-team">${item.team}</div>
       <div class="assignment-arrow">→</div>
       <div class="assignment-country">
-        <img src="${item.country.image}" alt="Bandera de ${item.country.name}">
+        <img src="${item.country.image}" alt="Bandera de ${item.country.name}" onerror="flagError(this)">
         <div class="assignment-country-name">${item.country.name}</div>
       </div>
     </div>
@@ -433,7 +453,7 @@ function buildFlipCards(countries) {
           <div class="flip-title">País oculto</div>
         </div>
         <div class="flip-face back">
-          <img class="flip-flag" src="${country.image}" alt="Bandera de ${country.name}">
+          <img class="flip-flag" src="${country.image}" alt="Bandera de ${country.name}" onerror="flagError(this)">
           <div class="flip-country">${country.name}</div>
         </div>
       </div>
