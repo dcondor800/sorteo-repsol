@@ -34,6 +34,29 @@ body {
   padding: 28px 16px 40px;
 }
 
+/* --- Botón de navegación entre apps --- */
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.22);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  backdrop-filter: blur(8px);
+  transition: background .15s, transform .08s;
+}
+
+.nav-btn:hover {
+  background: rgba(255,255,255,.22);
+  transform: translateX(2px);
+}
+
 /* --- Banner superior: contiene la imagen de Repsol --- */
 .top-banner {
   width: 100%;
