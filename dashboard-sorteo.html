@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Sorteo de Equipos · Repsol</title>
+  <style>
+    /* =========================================================
+       VARIABLES Y RESET
+    ========================================================= */
+    :root {
+      --bg1:    #062c4f;
+      --bg2:    #0a3d6b;
+      --card:   rgba(255, 255, 255, 0.97);
+      --accent: #00bcd4;
+      --radius: 16px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+      --text:   #0f172a;
+      --muted:  #64748b;
+
+      /* Colores por disciplina */
+      --c-voley-mixto:      #f59e0b;
+      --c-futbol-masculino: #22c55e;
+      --c-voley-femenino:   #e879f9;
+      --c-padel:            #38bdf8;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: Inter, system-ui, Arial, sans-serif;
+      background: linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 100%);
+      color: var(--text);
+      padding: 24px 16px 56px;
+    }
+
+    .container {
+      max-width: 880px;
+      margin: 0 auto;
+    }
+
+    /* =========================================================
+       BANNER CORPORATIVO
+    ========================================================= */
+    .top-banner {
+      width: 100%;
+      margin-bottom: 24px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+    }
+    .top-banner img {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    /* =========================================================
+       ENCABEZADO
+    ========================================================= */
+    .page-header {
+      color: #fff;
+      margin-bottom: 24px;
+    }
+    .page-header h1 {
+      font-size: clamp(22px, 4vw, 34px);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    .page-header p {
+      margin-top: 6px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.68);
+    }
+
+    /* =========================================================
+       CARDS
+    ========================================================= */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #1e293b;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .count-badge {
+      background: #0f172a;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 2px 9px;
+      margin-left: auto;
+    }
+
+    /* =========================================================
+       FORMULARIO
+    ========================================================= */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    label {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: #475569;
+    }
+    select,
+    input[type="text"] {
+      padding: 11px 14px;
+      border-radius: 10px;
+      border: 1.5px solid #cbd5e1;
+      font-family: inherit;
+      font-size: 14px;
+      color: #0f172a;
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    select:focus,
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.15);
+    }
+    select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 34px;
+    }
+
+    /* =========================================================
+       BOTONES
+    ========================================================= */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 11px 18px;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      color: #fff;
+      transition: transform 0.08s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
+    }
+    .btn:hover    { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+    .btn:active   { transform: translateY(0); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .btn-primary { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .btn-undo    { background: linear-gradient(135deg, #94a3b8, #64748b); }
+    .btn-danger  { background: linear-gradient(135deg, #f87171, #dc2626); }
+    .btn-export  { background: linear-gradient(135deg, #38bdf8, #0284c7); }
+
+    /* =========================================================
+       MENSAJES DE ESTADO
+    ========================================================= */
+    .msg {
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: none;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.4;
+    }
+    .msg.show { display: flex; }
+    .msg-error   { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; }
+    .msg-success { background: #f0fdf4; border: 1px solid #86efac; color: #15803d; }
+    .msg-icon    { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+    /* =========================================================
+       LISTA DE VERSUS
+    ========================================================= */
+    .versus-empty {
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--muted);
+      border: 2px dashed #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+    .versus-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 8px;
+      font-size: 13px;
+      transition: background 0.1s;
+    }
+    .versus-item:last-child { margin-bottom: 0; }
+    .versus-item:hover { background: #f1f5f9; }
+
+    .disc-badge {
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    /* Colores por disciplina en el dashboard */
+    .disc-voley-mixto      { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .disc-futbol-masculino { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .disc-voley-femenino   { background: #fdf4ff; color: #86198f; border: 1px solid #f5d0fe; }
+    .disc-padel            { background: #e0f2fe; color: #0c4a6e; border: 1px solid #bae6fd; }
+
+    .versus-teams {
+      flex: 1;
+      font-weight: 700;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .versus-vs {
+      font-size: 10px;
+      font-weight: 900;
+      color: #94a3b8;
+      margin: 0 5px;
+    }
+    .versus-time {
+      font-size: 11px;
+      color: #94a3b8;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .btn-del {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #cbd5e1;
+      font-size: 14px;
+      line-height: 1;
+      padding: 3px 6px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      transition: color 0.12s, background 0.12s;
+    }
+    .btn-del:hover { color: #ef4444; background: #fef2f2; }
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+    @media (max-width: 680px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .btn-row   { flex-direction: column; }
+      .btn       { justify-content: center; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Banner corporativo Repsol -->
+  <div class="top-banner">
+    <img src="repsol.png" alt="Repsol"
+         onerror="this.parentElement.style.display='none'">
+  </div>
+
+  <!-- Encabezado de página -->
+  <div class="page-header">
+    <h1>Dashboard — Sorteo de Equipos</h1>
+    <p>Panel del operador · Los cambios aparecen en tiempo real en la pantalla del proyector.</p>
+  </div>
+
+  <!-- Tarjeta: formulario para nuevo versus -->
+  <div class="card">
+    <div class="card-title">Nuevo versus</div>
+
+    <div id="msg-error"   class="msg msg-error">
+      <span class="msg-icon">✕</span>
+      <span id="msg-error-text"></span>
+    </div>
+    <div id="msg-success" class="msg msg-success">
+      <span class="msg-icon">✓</span>
+      <span id="msg-success-text"></span>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label for="sel-disciplina">Disciplina</label>
+        <select id="sel-disciplina">
+          <option value="">-- Selecciona --</option>
+          <option value="Vóley mixto">Vóley mixto</option>
+          <option value="Fútbol masculino">Fútbol masculino</option>
+          <option value="Vóley femenino">Vóley femenino</option>
+          <option value="Pádel">Pádel</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="inp-equipo1">Equipo 1</label>
+        <input type="text" id="inp-equipo1"
+               placeholder="Nombre del equipo" maxlength="40" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="inp-equipo2">Equipo 2</label>
+        <input type="text" id="inp-equipo2"
+               placeholder="Nombre del equipo" maxlength="40" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-agregar">＋ Agregar versus</button>
+      <button class="btn btn-undo"    id="btn-deshacer">↩ Deshacer último</button>
+      <button class="btn btn-danger"  id="btn-limpiar">🗑 Limpiar fixture</button>
+      <button class="btn btn-export"  id="btn-exportar">⬇ Exportar a Excel</button>
+    </div>
+  </div>
+
+  <!-- Tarjeta: lista de versus registrados -->
+  <div class="card">
+    <div class="card-title">
+      Versus registrados
+      <span class="count-badge" id="versus-count">0</span>
+    </div>
+    <div id="versus-list">
+      <div class="versus-empty">Aún no se han agregado versus.</div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+  // =========================================================================
+  // CONSTANTES
+  // =========================================================================
+  const LS_KEY  = 'fixture_sorteo_data';
+  const BC_NAME = 'fixture_sorteo_channel';
+
+  /** Mapeo de disciplina → clase CSS del badge en el dashboard. */
+  const DISC_BADGE_CLASS = {
+    'Vóley mixto':       'disc-voley-mixto',
+    'Fútbol masculino':  'disc-futbol-masculino',
+    'Vóley femenino':    'disc-voley-femenino',
+    'Pádel':             'disc-padel'
+  };
+
+  // =========================================================================
+  // ESTADO
+  // =========================================================================
+  let fixture = [];
+
+  // =========================================================================
+  // COMUNICACIÓN (BroadcastChannel)
+  // =========================================================================
+  const channel = new BroadcastChannel(BC_NAME);
+
+  /**
+   * Envía un mensaje al canal de comunicación con el fixture público.
+   * @param {string} type - Tipo de acción: ADD | REMOVE | UNDO | CLEAR
+   * @param {object} extra - Datos adicionales (versus, id, allData).
+   */
+  function broadcast(type, extra) {
+    channel.postMessage({ type, ...extra });
+  }
+
+  // =========================================================================
+  // PERSISTENCIA (localStorage)
+  // =========================================================================
+  function loadFromStorage() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      fixture = raw ? JSON.parse(raw) : [];
+    } catch {
+      fixture = [];
+    }
+  }
+
+  function saveToStorage() {
+    localStorage.setItem(LS_KEY, JSON.stringify(fixture));
+  }
+
+  // =========================================================================
+  // ACCIONES PRINCIPALES
+  // =========================================================================
+
+  /**
+   * Valida los campos y agrega un nuevo versus al fixture.
+   * Guarda en localStorage y notifica al canal público.
+   */
+  function addVersus() {
+    const disciplina = document.getElementById('sel-disciplina').value.trim();
+    const equipo1    = document.getElementById('inp-equipo1').value.trim();
+    const equipo2    = document.getElementById('inp-equipo2').value.trim();
+
+    // Validaciones de entrada
+    if (!disciplina)                                    return showError('Debes seleccionar una disciplina.');
+    if (!equipo1)                                       return showError('El campo Equipo 1 no puede estar vacío.');
+    if (!equipo2)                                       return showError('El campo Equipo 2 no puede estar vacío.');
+    if (equipo1.toLowerCase() === equipo2.toLowerCase()) return showError('Equipo 1 y Equipo 2 no pueden ser iguales.');
+
+    // Construir objeto versus con id único y marca de tiempo
+    const versus = {
+      id:        Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      disciplina,
+      equipo1,
+      equipo2,
+      fechaHora: new Date().toLocaleString('es-ES', {
+        day:    '2-digit', month:  '2-digit', year:   'numeric',
+        hour:   '2-digit', minute: '2-digit'
+      })
+    };
+
+    // Persistir y comunicar
+    fixture.push(versus);
+    saveToStorage();
+    broadcast('ADD', { versus, allData: fixture });
+
+    // Limpiar campos de equipo (mantiene la disciplina seleccionada)
+    document.getElementById('inp-equipo1').value = '';
+    document.getElementById('inp-equipo2').value = '';
+    document.getElementById('inp-equipo1').focus();
+
+    showSuccess(`"${equipo1} vs ${equipo2}" añadido correctamente.`);
+    renderList();
+  }
+
+  /**
+   * Elimina el último versus agregado y notifica el cambio.
+   */
+  function undoLast() {
+    if (fixture.length === 0) return showError('No hay versus para deshacer.');
+    const removed = fixture.pop();
+    saveToStorage();
+    broadcast('UNDO', { allData: fixture });
+    showSuccess(`Deshecho: "${removed.equipo1} vs ${removed.equipo2}".`);
+    renderList();
+  }
+
+  /**
+   * Elimina todos los versus con confirmación previa.
+   */
+  function clearFixture() {
+    if (fixture.length === 0) return showError('El fixture ya está vacío.');
+    if (!confirm('¿Confirmas que deseas eliminar todo el fixture? Esta acción no se puede deshacer.')) return;
+    fixture = [];
+    saveToStorage();
+    broadcast('CLEAR', { allData: [] });
+    showSuccess('Fixture limpiado correctamente.');
+    renderList();
+  }
+
+  /**
+   * Elimina un versus individual por su ID.
+   * @param {string} id - ID del versus a eliminar.
+   */
+  function removeById(id) {
+    const index = fixture.findIndex(v => v.id === id);
+    if (index === -1) return;
+    const removed = fixture.splice(index, 1)[0];
+    saveToStorage();
+    broadcast('REMOVE', { id: removed.id, allData: fixture });
+    showSuccess(`"${removed.equipo1} vs ${removed.equipo2}" eliminado.`);
+    renderList();
+  }
+
+  // =========================================================================
+  // EXPORTACIÓN A EXCEL
+  // Usa xlsx-js-style (mismo CDN que index.html) para generar un .xlsx
+  // binario real, igual que sorteo-paises.js. Esto evita el aviso de
+  // Excel sobre "el formato y la extensión no coinciden".
+  // =========================================================================
+  function exportExcel() {
+    if (fixture.length === 0) {
+      return showError('No hay versus para exportar. Agrega al menos uno primero.');
+    }
+
+    // Verificar que la librería haya cargado desde el CDN
+    if (typeof XLSX === 'undefined') {
+      return showError('La librería de Excel no está disponible. Verifica tu conexión a internet.');
+    }
+
+    const fecha = new Date().toLocaleDateString('es-ES');
+
+    // Función auxiliar: celda con valor (v), tipo string (t:'s') y estilo (s)
+    function c(v, s) { return { v, t: 's', s }; }
+
+    // Borde fino azul para todas las celdas de datos
+    const border = {
+      top:    { style: 'thin', color: { rgb: 'BFDBFE' } },
+      bottom: { style: 'thin', color: { rgb: 'BFDBFE' } },
+      left:   { style: 'thin', color: { rgb: 'BFDBFE' } },
+      right:  { style: 'thin', color: { rgb: 'BFDBFE' } }
+    };
+
+    // Estilos de celda — colores en RGB hexadecimal SIN el símbolo #
+    const S = {
+      title: {
+        fill:      { patternType: 'solid', fgColor: { rgb: '062C4F' } },
+        font:      { color: { rgb: 'FFFFFF' }, bold: true, sz: 14, name: 'Arial' },
+        alignment: { horizontal: 'left', vertical: 'center' }
+      },
+      subtitle: {
+        fill:      { patternType: 'solid', fgColor: { rgb: '0A3D6B' } },
+        font:      { color: { rgb: '93C5FD' }, sz: 10, name: 'Arial' },
+        alignment: { horizontal: 'left', vertical: 'center' }
+      },
+      headerNum: {
+        fill:      { patternType: 'solid', fgColor: { rgb: '0F172A' } },
+        font:      { color: { rgb: 'FFFFFF' }, bold: true, sz: 11, name: 'Arial' },
+        alignment: { horizontal: 'center', vertical: 'center' }
+      },
+      headerText: {
+        fill:      { patternType: 'solid', fgColor: { rgb: '0F172A' } },
+        font:      { color: { rgb: 'FFFFFF' }, bold: true, sz: 11, name: 'Arial' },
+        alignment: { horizontal: 'left', vertical: 'center' }
+      },
+      footer: {
+        fill:      { patternType: 'solid', fgColor: { rgb: 'E0F2FE' } },
+        font:      { color: { rgb: '075985' }, sz: 10, name: 'Arial', italic: true },
+        alignment: { horizontal: 'center', vertical: 'center' }
+      }
+    };
+
+    // Estilos de fila de datos: pares azul claro, impares blanco
+    function rowStyle(i) {
+      const rgb  = i % 2 === 0 ? 'DBEAFE' : 'F8FAFC';
+      const base = { fill: { patternType: 'solid', fgColor: { rgb } }, font: { sz: 11, name: 'Arial' }, border };
+      return {
+        num:  { ...base, font: { ...base.font, bold: true, color: { rgb: '1D4ED8' } }, alignment: { horizontal: 'center', vertical: 'center' } },
+        text: { ...base, font: { ...base.font, color: { rgb: '0F172A' } },             alignment: { horizontal: 'left',   vertical: 'center' } }
+      };
+    }
+
+    // Array de arrays (aoa): cada fila exterior es una fila, cada interior una celda
+    const lastRow = fixture.length + 3;
+    const aoa = [
+      // Fila 0: título fusionado en 5 columnas
+      [c('FIXTURE DEL SORTEO — REPSOL', S.title), c('',S.title), c('',S.title), c('',S.title), c('',S.title)],
+      // Fila 1: subtítulo con fecha y total, fusionado
+      [c(`Fecha: ${fecha}   |   Total versus: ${fixture.length}`, S.subtitle), c('',S.subtitle), c('',S.subtitle), c('',S.subtitle), c('',S.subtitle)],
+      // Fila 2: encabezados de columna
+      [c('Nº', S.headerNum), c('Disciplina', S.headerText), c('Equipo 1', S.headerText), c('Equipo 2', S.headerText), c('Fecha/Hora', S.headerText)],
+      // Filas 3…N: datos del fixture en el orden en que fueron agregados
+      ...fixture.map((v, i) => {
+        const rs = rowStyle(i);
+        return [c(String(i + 1), rs.num), c(v.disciplina, rs.text), c(v.equipo1, rs.text), c(v.equipo2, rs.text), c(v.fechaHora, rs.text)];
+      }),
+      // Última fila: pie de tabla fusionado
+      [c('Generado por Dinámica Oficial Repsol', S.footer), c('',S.footer), c('',S.footer), c('',S.footer), c('',S.footer)]
+    ];
+
+    const WB = XLSX.utils.book_new();
+    const WS = XLSX.utils.aoa_to_sheet(aoa);
+
+    // Celdas fusionadas: título (fila 0), subtítulo (fila 1) y pie (última fila)
+    WS['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } },
+      { s: { r: lastRow, c: 0 }, e: { r: lastRow, c: 4 } }
+    ];
+
+    // Anchos de columna en caracteres (wch)
+    WS['!cols'] = [{ wch: 6 }, { wch: 20 }, { wch: 28 }, { wch: 28 }, { wch: 18 }];
+
+    // Altos de fila en puntos (hpt)
+    WS['!rows'] = [
+      { hpt: 28 }, { hpt: 18 }, { hpt: 22 },
+      ...fixture.map(() => ({ hpt: 20 })),
+      { hpt: 16 }
+    ];
+
+    XLSX.utils.book_append_sheet(WB, WS, 'Fixture Sorteo');
+
+    // Generar como ArrayBuffer y descargar via Blob (igual que sorteo-paises.js)
+    const wbout  = XLSX.write(WB, { bookType: 'xlsx', type: 'array' });
+    const blob   = new Blob([wbout], { type: 'application/octet-stream' });
+    const url    = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href     = url;
+    anchor.download = 'fixture-sorteo.xlsx';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+
+    showSuccess(`Descargado: fixture-sorteo.xlsx (${fixture.length} versus).`);
+  }
+
+  // =========================================================================
+  // RENDERIZADO DE LA LISTA
+  // =========================================================================
+
+  /**
+   * Actualiza el listado de versus en el panel del operador.
+   * Los muestra en orden inverso (más reciente primero).
+   */
+  function renderList() {
+    const container = document.getElementById('versus-list');
+    const countEl   = document.getElementById('versus-count');
+
+    countEl.textContent = fixture.length;
+
+    if (fixture.length === 0) {
+      container.innerHTML = '<div class="versus-empty">Aún no se han agregado versus.</div>';
+      return;
+    }
+
+    container.innerHTML = [...fixture].reverse().map(v => `
+      <div class="versus-item">
+        <span class="disc-badge ${DISC_BADGE_CLASS[v.disciplina] || ''}">${v.disciplina}</span>
+        <span class="versus-teams">
+          ${escapeHtml(v.equipo1)}<span class="versus-vs">VS</span>${escapeHtml(v.equipo2)}
+        </span>
+        <span class="versus-time">${v.fechaHora}</span>
+        <button class="btn-del" onclick="removeById('${v.id}')" title="Eliminar">✕</button>
+      </div>`).join('');
+  }
+
+  // =========================================================================
+  // MENSAJES DE ESTADO
+  // =========================================================================
+  let timerError   = null;
+  let timerSuccess = null;
+
+  function showError(text) {
+    const msgEl = document.getElementById('msg-error');
+    document.getElementById('msg-error-text').textContent = text;
+    document.getElementById('msg-success').classList.remove('show');
+    msgEl.classList.add('show');
+    clearTimeout(timerError);
+    timerError = setTimeout(() => msgEl.classList.remove('show'), 4500);
+  }
+
+  function showSuccess(text) {
+    const msgEl = document.getElementById('msg-success');
+    document.getElementById('msg-success-text').textContent = text;
+    document.getElementById('msg-error').classList.remove('show');
+    msgEl.classList.add('show');
+    clearTimeout(timerSuccess);
+    timerSuccess = setTimeout(() => msgEl.classList.remove('show'), 3500);
+  }
+
+  // =========================================================================
+  // UTILIDADES
+  // =========================================================================
+
+  /** Escapa caracteres HTML especiales para evitar inyección. */
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // =========================================================================
+  // EVENTOS
+  // =========================================================================
+  document.getElementById('btn-agregar').addEventListener('click', addVersus);
+  document.getElementById('btn-deshacer').addEventListener('click', undoLast);
+  document.getElementById('btn-limpiar').addEventListener('click', clearFixture);
+  document.getElementById('btn-exportar').addEventListener('click', exportExcel);
+
+  // Presionar Enter desde cualquier campo del formulario agrega el versus
+  ['sel-disciplina', 'inp-equipo1', 'inp-equipo2'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') addVersus();
+    });
+  });
+
+  // =========================================================================
+  // INICIALIZACIÓN
+  // =========================================================================
+  loadFromStorage();
+  renderList();
+</script>
+
+<!-- xlsx-js-style: genera archivos .xlsx nativos con estilos de celda (mismo CDN que index.html) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+</body>
+</html>
