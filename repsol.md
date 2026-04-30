@@ -6,7 +6,7 @@ Documento de referencia para entender, mantener y ampliar la aplicación sin nec
 
 ## 1. Qué hace la app
 
-Aplicación web estática para gestionar un torneo deportivo interno de Repsol con temática de Copa Mundial. Consta de **cuatro herramientas independientes** que comparten la misma identidad visual:
+Aplicación web estática para gestionar un torneo deportivo interno de Repsol con temática de Copa Mundial. Consta de **cinco herramientas independientes** que comparten la misma identidad visual:
 
 | Herramienta | Archivo | Propósito |
 |---|---|---|
@@ -14,6 +14,7 @@ Aplicación web estática para gestionar un torneo deportivo interno de Repsol c
 | Fixture / Emparejamientos (legado) | `sorteo-equipos.html` | Genera partidos enfrentando equipos de a pares de forma aleatoria |
 | Dashboard del Sorteo en Vivo | `dashboard-sorteo.html` | Panel del operador para registrar versus uno a uno durante el sorteo en directo |
 | Fixture Público en Vivo | `fixture-sorteo.html` | Pantalla del proyector: recibe los versus en tiempo real y los muestra con animaciones |
+| Sorteo por Grupos | `sorteo-grupos.html` | Distribuye países en grupos (A, B, C…) de forma aleatoria con animación de tarjetas volantes |
 
 Todas las herramientas son completamente **client-side**: no requieren servidor, base de datos ni build. Se abren directamente en el navegador.
 
@@ -23,24 +24,27 @@ Todas las herramientas son completamente **client-side**: no requieren servidor,
 
 ```
 /
-├── index.html              ← Asignación de países (página principal)
-├── sorteo-equipos.html     ← Generación de fixture/partidos (herramienta legado)
-├── dashboard-sorteo.html   ← Panel del operador para el sorteo en vivo
-├── fixture-sorteo.html     ← Pantalla pública del proyector (sorteo en vivo)
-├── repsol.png              ← Banner corporativo Repsol (aparece en todas las páginas)
+├── index.html                  ← Asignación de países (página principal)
+├── sorteo-equipos.html         ← Generación de fixture/partidos (herramienta legado)
+├── dashboard-sorteo.html       ← Panel del operador para el sorteo en vivo
+├── fixture-sorteo.html         ← Pantalla pública del proyector (sorteo en vivo)
+├── sorteo-grupos.html          ← Sorteo por grupos (animación: tarjetas volantes — VERSIÓN ACTIVA)
+├── sorteo-grupos-op1.html      ← Variante: animación ruleta de banderas (slot machine)
+├── sorteo-grupos-op3.html      ← Variante: animación cuenta regresiva + confeti
+├── repsol.png                  ← Banner corporativo Repsol (aparece en todas las páginas)
 │
 ├── css/
-│   ├── sorteo-paises.css   ← Estilos exclusivos de index.html
-│   └── styles.css          ← Estilos exclusivos de sorteo-equipos.html
+│   ├── sorteo-paises.css       ← Estilos exclusivos de index.html
+│   └── styles.css              ← Estilos exclusivos de sorteo-equipos.html
 │
 ├── js/
-│   ├── sorteo-paises.js    ← Toda la lógica de index.html (asignación + Excel)
-│   └── app.js              ← Toda la lógica de sorteo-equipos.html (fixture)
+│   ├── sorteo-paises.js        ← Toda la lógica de index.html (asignación + Excel)
+│   └── app.js                  ← Toda la lógica de sorteo-equipos.html (fixture)
 │
-└── img/flags/              ← Carpeta de banderas locales (sin uso activo; las banderas se sirven desde flagcdn.com)
+└── img/flags/                  ← Carpeta de banderas locales (sin uso activo; las banderas se sirven desde flagcdn.com)
 ```
 
-> `dashboard-sorteo.html` y `fixture-sorteo.html` tienen todo su CSS y JS **embebido** dentro del mismo archivo HTML. No usan archivos externos propios.
+> `dashboard-sorteo.html`, `fixture-sorteo.html` y los tres archivos `sorteo-grupos*.html` tienen todo su CSS y JS **embebido** dentro del mismo archivo HTML. No usan archivos externos propios.
 
 ---
 
@@ -109,8 +113,9 @@ Estas dos páginas funcionan como un sistema sincronizado pensado para usarse si
 DASHBOARD (operador)                    FIXTURE (proyector)
 ────────────────────                    ───────────────────
 Selecciona disciplina                   Carga localStorage al abrir
-Escribe Equipo 1 y Equipo 2             Escucha BroadcastChannel
-Presiona "Agregar versus"               Escucha window.storage (respaldo)
+Selecciona Equipo 1 y Equipo 2          Escucha BroadcastChannel
+  (listas precargadas por disciplina)   Escucha window.storage (respaldo)
+Presiona "Agregar versus"
         ↓
 addVersus()
   → Valida campos
@@ -121,7 +126,7 @@ addVersus()
   → BroadcastChannel.postMessage
     { type:'ADD', versus, allData }
         ↓                                       ↓
-  Limpia Equipo 1 y Equipo 2         channel.onmessage recibe ADD
+  refreshTeamSelects(disciplina)      channel.onmessage recibe ADD
   Mantiene disciplina seleccionada            ↓
   Muestra mensaje de éxito           enqueueAnimation(versus)
   Actualiza lista del dashboard               ↓
@@ -147,6 +152,39 @@ addVersus()
 | Deshacer último | `{ type:'UNDO', allData }` | Re-renderiza sin animación |
 | Eliminar individual | `{ type:'REMOVE', id, allData }` | Re-renderiza sin animación |
 | Limpiar fixture | `{ type:'CLEAR', allData:[] }` | Vuelve al estado vacío |
+
+### 3.4 Sorteo por Grupos (`sorteo-grupos.html`)
+
+```
+Usuario selecciona disciplina
+        ↓
+doReset()
+  → renderCountriesPreview(cfg) → muestra grilla de banderas de la disciplina
+  → renderEmpty(cfg) → muestra slots vacíos (A1, A2… / B1, B2…)
+        ↓
+Usuario presiona "Sortear"
+        ↓
+doSort()
+  → Captura posiciones DOM de las tarjetas de la grilla (getBoundingClientRect)
+  → shuffle(cfg.countries) → array barajado
+  → renderEmpty(cfg) → resetea slots
+  → Crea overlay fijo con clones de las tarjetas (position: fixed)
+  → Atenúa grilla original (opacity: 0.15)
+        ↓
+FASE 1 — Caos (0–950ms)
+  → Cada tarjeta vuela a posición aleatoria cerca del centro
+  → Rotaciones y escalas aleatorias
+        ↓
+FASE 2 — Despacho (950ms+, stagger 140ms por slot)
+  → Cada tarjeta vuela a su slot asignado
+  → Al llegar: slot hace flip 3D → revela posición + bandera + país
+  → Tarjeta volante se desvanece
+        ↓
+Cleanup
+  → Overlay eliminado
+  → Grilla original restaurada
+  → Controles desbloqueados
+```
 
 ---
 
@@ -185,6 +223,8 @@ addVersus()
 
 | Función | Descripción |
 |---|---|
+| `getAvailableTeams(disciplina)` | Filtra de `TEAMS_BY_DISCIPLINE` los equipos que aún no han sido usados en un versus de esa disciplina. |
+| `refreshTeamSelects(disciplina)` | Repuebla ambos `<select>` de equipo con los equipos disponibles (no usados). Se llama tras add, undo, remove, clear y cambio de disciplina. |
 | `addVersus()` | Valida, crea el objeto versus, lo guarda en localStorage y lo emite por BroadcastChannel. |
 | `undoLast()` | Elimina el último elemento del array y sincroniza. |
 | `removeById(id)` | Elimina un versus por ID y sincroniza. |
@@ -205,6 +245,20 @@ addVersus()
 | `renderFixture(highlightId)` | Re-renderiza todas las secciones del fixture; aplica `card-enter` solo a la tarjeta nueva. |
 | `updateClock()` | Actualiza el reloj en tiempo real en el header (llamado cada segundo). |
 
+### Exclusivas de `sorteo-grupos.html` y variantes (JS embebido)
+
+| Función | Descripción |
+|---|---|
+| `CONFIG` | Objeto central con `label`, `countries[]`, `groups[]` y opcionalmente `constrained[]` por disciplina. |
+| `shuffle(arr)` | Fisher-Yates. Usado para todas las disciplinas sin restricción. |
+| `getConstrainedShuffle(cfg)` | Sorteo fixture-aware para disciplinas con `constrained`. Para Pádel: divide los 4 especiales en 2+2 entre grupos, luego asigna cada par a una posición de slot que **solo juega en Fecha 2** (`{1,5}·{2,3}·{2,4}·{3,5}·{4,5}`), elegida al azar. Los países normales rellenan los 3 slots restantes de cada grupo. Garantiza que los 4 especiales no se enfrenten en Fecha 1. |
+| `renderCountriesPreview(cfg)` | Muestra la grilla de banderas de la disciplina activa. |
+| `renderEmpty(cfg)` | Renderiza los grupos con slots vacíos mostrando solo la etiqueta de posición. |
+| `doSort()` | Lanza la animación de sorteo. Llama a `getConstrainedShuffle` si `cfg.constrained` existe, o `shuffle` en caso contrario. Implementación de animación difiere por variante. |
+| `doReset()` | Restaura el estado inicial: preview de países + slots vacíos. |
+| `setControls(disabled)` | Bloquea/desbloquea select y botones durante la animación. |
+| `flagError(img)` | Mismo patrón que sorteo-paises.js: SVG placeholder inline para banderas rotas. |
+
 ---
 
 ## 5. Persistencia y comunicación (sorteo en vivo)
@@ -221,7 +275,7 @@ addVersus()
 ```js
 {
   id:        String,  // ID único: Date.now().toString(36) + random
-  disciplina: String, // 'Vóley mixto' | 'Fútbol masculino' | 'Vóley femenino' | 'Pádel'
+  disciplina: String, // 'Vóley mixto' | 'Fútbol masculino' | 'Fútbol femenino' | 'Pádel'
   equipo1:   String,
   equipo2:   String,
   fechaHora: String   // Formato localizado es-ES: "DD/MM/YYYY, HH:MM"
@@ -237,22 +291,39 @@ addVersus()
 
 ## 6. Disciplinas del sorteo en vivo
 
-Las disciplinas están declaradas en el array `DISCIPLINES` dentro de `fixture-sorteo.html`:
+Las disciplinas están declaradas en el array `DISCIPLINES` dentro de `fixture-sorteo.html`, y en los `<option>` del select de `dashboard-sorteo.html`. **Ambos deben usar los mismos strings exactos como claves.**
 
-| Disciplina | Color de acento | Icono | ID de sección |
+| Disciplina | Color de acento | Icono | ID de sección CSS (interno) |
 |---|---|---|---|
-| Vóley mixto | `#f59e0b` (ámbar) | 🏐 | `sec-voley-mixto` |
-| Fútbol masculino | `#4ade80` (verde) | ⚽ | `sec-futbol-masculino` |
-| Vóley femenino | `#f0abfc` (fucsia) | 🏐 | `sec-voley-femenino` |
-| Pádel | `#7dd3fc` (azul cielo) | 🎾 | `sec-padel` |
+| Vóley mixto | `#f59e0b` (ámbar) | 🏐 | `sec-voley-mixto` / `disc-voley-mixto` |
+| Fútbol masculino | `#4ade80` (verde) | ⚽ | `sec-futbol-masculino` / `disc-futbol-masculino` |
+| Fútbol femenino | `#f0abfc` (fucsia) | ⚽ | `sec-voley-femenino` / `disc-voley-femenino` |
+| Pádel | `#7dd3fc` (azul cielo) | 🎾 | `sec-padel` / `disc-padel` |
 
-El layout del fixture es una **cuadrícula 2×2** (dos columnas, dos filas). Las secciones sin cruces se ocultan con `.hidden`; las que tienen cruces se muestran y el grid se ajusta automáticamente.
+> Los IDs internos de Fútbol femenino conservan el prefijo `voley-femenino` por razones históricas. El string visible y la clave de matching es `'Fútbol femenino'`.
+
+El layout del fixture es una **cuadrícula 2×2** (dos columnas, dos filas). Las secciones sin cruces se ocultan con `.hidden`.
 
 ---
 
-## 7. Configuración de categorías (herramientas legado)
+## 7. Equipos por disciplina (dashboard-sorteo.html)
 
-Todo el comportamiento variable de `sorteo-equipos.html` e `index.html` está en el objeto `categoryConfig` al inicio de cada archivo JS.
+Los equipos están hardcodeados en `TEAMS_BY_DISCIPLINE` dentro del JS embebido de `dashboard-sorteo.html`. Al seleccionar una disciplina, los selects de Equipo 1 y Equipo 2 se cargan solo con los equipos **no usados aún** en esa disciplina.
+
+| Disciplina | Equipos |
+|---|---|
+| Pádel | Bicampeones, Doble Energía Pampilla, El dúo de la historia, Los doble falta, Par técnico, Henry Cup, Dúo dinamita, Torres gemelas, Six-Seven, One CYC |
+| Fútbol masculino | Movilidad con ALMA FC, Real Blending F.C., Atlético Octano, Los Ejecutores, Alto Octanaje FC, Real E&P, Supply & Trading, CFO, Los Re-Finos F.C. |
+| Fútbol femenino | Energía Femenina, Motomamis FC, Focus Mode FC |
+| Vóley mixto | Bloque técnico, Bloqueo 57, Octanaje Implacable, Servicios Globales, Repsolitos Pyoneros, Energía 360, Energizados Pampilla, Latinita Repsol, Pampilla Lovers, Repvol |
+
+---
+
+## 8. Configuración de categorías (herramientas legado + sorteo por grupos)
+
+### Herramientas legado (`app.js` y `sorteo-paises.js`)
+
+Objeto `categoryConfig` al inicio de cada archivo JS.
 
 | Clave | Nombre visible | Equipos | Países |
 |---|---|---|---|
@@ -263,22 +334,63 @@ Todo el comportamiento variable de `sorteo-equipos.html` e `index.html` está en
 
 Las banderas usan el CDN `https://flagcdn.com/w160/{codigo-iso}.png`.
 
+### Sorteo por grupos (`sorteo-grupos.html` y variantes)
+
+Objeto `CONFIG` embebido en el JS de cada archivo. Estructura de cada entrada:
+
+```js
+{
+  label: String,          // Nombre visible en la UI
+  countries: [            // Países que participan (mismo orden no importa, se barajan)
+    { name: String, code: String }  // code = código ISO para flagcdn.com
+  ],
+  groups: [               // Definición de grupos
+    { name: String, prefix: String, size: Number }
+    // name: "GRUPO A" | prefix: letra del slot ("A", "B", "F"…) | size: cantidad de slots
+  ],
+  constrained: [String]   // OPCIONAL. Códigos ISO de países con restricción de fixture.
+                          // Si está presente, se usa getConstrainedShuffle() en lugar de shuffle().
+}
+```
+
+| Disciplina | Grupos | Slots | Países |
+|---|---|---|---|
+| Fútbol Masculino | A, B, C | A1–A3, B1–B3, C1–C3 | Francia, España, Argentina, Inglaterra, Brasil, Portugal, Marruecos, Países Bajos, Ecuador |
+| Fútbol Femenino | A (prefix F) | F1, F2, F3 | Bélgica, Alemania, Colombia |
+| Vóley Mixto | A, B | A1–A5, B1–B5 | Croacia, Uruguay, Suiza, México, EEUU, Japón, Senegal, Irán, Corea del Sur, Perú |
+| Pádel | A, B | A1–A5, B1–B5 | Austria, Canadá, Australia, Noruega, Panamá, Arabia Saudita, Paraguay, Suecia, Egipto, Turquía |
+
+**Restricción especial de Pádel:** Austria, Egipto, Canadá y Turquía están declarados en `constrained: ['at','eg','ca','tr']`. El sorteo garantiza que ninguno de estos 4 países se enfrente entre sí en **Fecha 1**. Ver `getConstrainedShuffle` en sección 4.
+
+Las banderas usan `https://flagcdn.com/w80/{codigo-iso}.png` (tamaño más pequeño que las herramientas legado).
+
 ---
 
-## 8. Convenciones de código y estilos
+## 9. Variantes de animación (sorteo por grupos)
+
+| Archivo | Animación | Estado |
+|---|---|---|
+| `sorteo-grupos.html` | **Tarjetas volantes** — las banderas se despegan de la grilla, vuelan al centro caóticamente y luego cada una aterriza en su slot disparando el flip 3D | Versión activa |
+| `sorteo-grupos-op1.html` | **Ruleta** — todos los slots giran simultáneamente con banderas en bucle rápido, luego se frenan y bloquean uno a uno con flip de confirmación | Variante de comparación |
+| `sorteo-grupos-op3.html` | **Cuenta regresiva** — overlay oscuro con 3→2→1 animado, destello "¡SORTEO!" y confeti (90 partículas), luego reveals escalonados con flip | Variante de comparación |
+
+Para elegir una variante como definitiva: renombrar el archivo elegido a `sorteo-grupos.html` (o actualizar los enlaces que apunten a él).
+
+---
+
+## 10. Convenciones de código y estilos
 
 ### JavaScript
 - Vanilla JS puro, sin frameworks ni bundler.
 - Funciones nombradas con `camelCase`.
 - Referencias al DOM obtenidas una sola vez al cargar y reutilizadas.
-- `dashboard-sorteo.html` y `fixture-sorteo.html` tienen todo el código embebido en un único `<script>` al final del `<body>`.
+- Archivos con JS embebido: todo en un único `<script>` al final del `<body>`.
 
 ### CSS
 - Variables CSS en `:root` compartidas entre las herramientas del mismo tipo:
-  - Herramientas legado: `--bg1: #062c4f`, `--bg2: #0a3d6b`, `--accent: #00bcd4`, `--radius: 18px`
+  - Herramientas legado y grupos: `--bg1: #062c4f`, `--bg2: #0a3d6b`, `--accent: #00bcd4`, `--radius: 18px`
   - Sorteo en vivo: fondo muy oscuro (`#08101e`), colores por disciplina como variables propias
-- Layout responsive con breakpoint en `900px` (tablet/móvil).
-- `dashboard-sorteo.html`: fondo azul degradado, tarjetas blancas semitransparentes (misma línea estética que las herramientas legado).
+- Layout responsive con breakpoint en `620–900px` según archivo.
 - `fixture-sorteo.html`: diseño oscuro deportivo optimizado para proyector 16:9, texto grande con `clamp()`.
 
 ### HTML
@@ -289,19 +401,19 @@ Las banderas usan el CDN `https://flagcdn.com/w160/{codigo-iso}.png`.
 
 ---
 
-## 9. Dependencias
+## 11. Dependencias
 
 | Dependencia | Cómo se usa | Dónde se carga |
 |---|---|---|
 | [xlsx-js-style v1.2.0](https://github.com/gitbrent/xlsx-js-style) | Genera archivos `.xlsx` con estilos de celda nativos | CDN en `index.html` y `dashboard-sorteo.html` |
-| [flagcdn.com](https://flagcdn.com) | Sirve imágenes de banderas por código ISO | URLs en `categoryConfig` de `sorteo-paises.js` |
+| [flagcdn.com](https://flagcdn.com) | Sirve imágenes de banderas por código ISO | URLs en `categoryConfig`/`CONFIG` de los archivos JS |
 | BroadcastChannel API | Comunicación en tiempo real entre dashboard y fixture | Nativo del navegador, sin CDN |
 
 **No hay dependencias de Node, npm, ni sistema de build.** Todo funciona abriendo los archivos directamente en Chrome/Brave.
 
 ---
 
-## 10. Partes sensibles del código
+## 12. Partes sensibles del código
 
 ### Cola de animaciones en `fixture-sorteo.html`
 Si el operador agrega varios versus rápidamente, `enqueueAnimation()` los apila. La función `processNextAnimation()` los consume uno a uno de forma recursiva. Si se modifica la duración del overlay (`T.HIDE_DONE`), hay que asegurarse de que `setTimeout(processNextAnimation, 400)` al final del callback siga siendo mayor que cero.
@@ -310,35 +422,44 @@ Si el operador agrega varios versus rápidamente, `enqueueAnimation()` los apila
 `fixture-sorteo.html` escucha ambos. Si llega un `ADD` por BroadcastChannel, **anima**. Si llega por `storage`, **solo renderiza** (sin animación) para evitar que aparezca dos veces. No mezclar los dos caminos.
 
 ### Estado global del dashboard
-El array `fixture` en `dashboard-sorteo.html` es la única fuente de verdad. Todas las acciones (add, undo, remove, clear) terminan en `saveToStorage()` + `broadcast()`. Si se agrega lógica nueva, siempre seguir ese orden.
+El array `fixture` en `dashboard-sorteo.html` es la única fuente de verdad. Todas las acciones (add, undo, remove, clear) terminan en `saveToStorage()` + `broadcast()` + `refreshTeamSelects()`. Si se agrega lógica nueva, siempre seguir ese orden.
 
-### Bucle infinito en `flagError` (`sorteo-paises.js` líneas 103–107)
-Antes de cambiar `img.src` al placeholder, se anula `img.onerror = null`. Sin esa línea, el cambio de `src` dispararía `onerror` de nuevo indefinidamente.
+### Equipos disponibles en el dashboard
+`getAvailableTeams(disciplina)` recorre el array `fixture` completo para calcular qué equipos ya tienen versus. Si se borra el localStorage manualmente, `fixture` se recarga vacío y todos los equipos vuelven a estar disponibles automáticamente al recargar la página.
+
+### Bucle infinito en `flagError`
+Antes de cambiar `img.src` al placeholder SVG, se anula `img.onerror = null`. Sin esa línea, el cambio de `src` dispararía `onerror` de nuevo indefinidamente. Patrón presente en todos los archivos que muestran banderas.
 
 ### Descarga Excel via Blob (patrón compartido)
 Tanto `sorteo-paises.js` como `dashboard-sorteo.html` usan el mismo patrón: `XLSX.write → Blob(octet-stream) → createObjectURL → anchor.click → revokeObjectURL`. Cualquier cambio en la estructura de celdas debe mantener coherencia entre `aoa`, `!merges` y `!rows` (índices base 0).
+
+### Posicionamiento de tarjetas volantes (`sorteo-grupos.html`)
+Las tarjetas volantes usan `position: fixed` dentro del overlay. Las coordenadas se obtienen con `getBoundingClientRect()` **antes** de que `renderEmpty()` destruya los elementos fuente del DOM. Si se cambia el orden de llamadas en `doSort()`, las posiciones quedarán en (0,0).
 
 ### `syncTextareaWithCount` (herramientas legado)
 Trunca el textarea **silenciosamente** al cambiar de categoría. Los datos extra se pierden sin advertencia.
 
 ---
 
-## 11. Guía rápida para cambios frecuentes
+## 13. Guía rápida para cambios frecuentes
 
 ### Añadir un versus desde el dashboard
-Rellenar los tres campos y presionar "Agregar versus" (o Enter). La disciplina permanece seleccionada para el siguiente versus.
+Seleccionar disciplina → los selects de equipo se cargan automáticamente con los equipos disponibles → seleccionar Equipo 1 y Equipo 2 → presionar "Agregar versus" (o Enter). Los equipos usados desaparecen de los selects automáticamente.
+
+### Modificar la restricción de fixture en Pádel
+La restricción está hardcodeada en `SAFE_PAIRS` dentro de `getConstrainedShuffle` (todos los archivos `sorteo-grupos*.html`). Los pares seguros actuales son los que **no** se enfrentan en Fecha 1: `{1,5},{2,3},{2,4},{3,5},{4,5}`. Si el fixture cambia, actualizar ese array. Los países con restricción se declaran en `CONFIG.padel.constrained`.
 
 ### Cambiar las disciplinas del sorteo en vivo
-Editar el array `DISCIPLINES` en `fixture-sorteo.html` (colores, iconos, IDs de sección) **y** los `<option>` del `<select id="sel-disciplina">` en `dashboard-sorteo.html`. Ambos deben usar exactamente los mismos strings como claves.
+Editar el array `DISCIPLINES` en `fixture-sorteo.html` (colores, iconos, IDs de sección) **y** los `<option>` del `<select id="sel-disciplina">` en `dashboard-sorteo.html`. Ambos deben usar exactamente los mismos strings como claves. Si se agrega una disciplina nueva, también añadirla a `TEAMS_BY_DISCIPLINE` y a `DISC_BADGE_CLASS`.
 
 ### Cambiar el layout del fixture (columnas)
 Modificar `grid-template-columns` y `grid-template-rows` en `.main-content` de `fixture-sorteo.html`. Actualmente `1fr 1fr` / `1fr 1fr` produce la cuadrícula 2×2.
 
-### Cambiar la duración de la animación del overlay
+### Cambiar la duración de la animación del overlay (sorteo en vivo)
 Modificar los valores del objeto `T` en `fixture-sorteo.html` (en milisegundos). `T.HIDE_DONE - T.HIDE_START` define la duración del fade-out (actualmente 550ms).
 
-### Modificar los estilos del Excel del dashboard
-Editar `exportExcel()` en `dashboard-sorteo.html`. Los colores van en RGB hexadecimal **sin `#`**. El patrón es idéntico al de `downloadExcel()` en `sorteo-paises.js`.
+### Modificar los estilos del Excel
+Editar `exportExcel()` en `dashboard-sorteo.html` o `downloadExcel()` en `sorteo-paises.js`. Los colores van en RGB hexadecimal **sin `#`**. El patrón de construcción es idéntico en ambos archivos.
 
 ### Añadir una nueva categoría (herramientas legado)
 1. En `js/app.js`: añadir entrada a `categoryConfig` con `label` y `teamCount`.
@@ -346,7 +467,7 @@ Editar `exportExcel()` en `dashboard-sorteo.html`. Los colores van en RGB hexade
 3. En ambos `<select>` de los HTML legado: añadir `<option>`.
 
 ### Cambiar el banner corporativo
-Reemplazar `repsol.png` en la raíz. Está referenciado directamente en los cuatro HTML.
+Reemplazar `repsol.png` en la raíz. Está referenciado directamente en todos los HTML.
 
 ### Limpiar el fixture en vivo entre ensayos
 Presionar "Limpiar fixture" en el dashboard, o ejecutar en la consola del navegador:
