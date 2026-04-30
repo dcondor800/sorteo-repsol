@@ -324,19 +324,21 @@
           <option value="">-- Selecciona --</option>
           <option value="Vóley mixto">Vóley mixto</option>
           <option value="Fútbol masculino">Fútbol masculino</option>
-          <option value="Vóley femenino">Vóley femenino</option>
+          <option value="Fútbol femenino">Fútbol femenino</option>
           <option value="Pádel">Pádel</option>
         </select>
       </div>
       <div class="field">
-        <label for="inp-equipo1">Equipo 1</label>
-        <input type="text" id="inp-equipo1"
-               placeholder="Nombre del equipo" maxlength="40" autocomplete="off">
+        <label for="sel-equipo1">Equipo 1</label>
+        <select id="sel-equipo1" disabled>
+          <option value="">-- Selecciona disciplina --</option>
+        </select>
       </div>
       <div class="field">
-        <label for="inp-equipo2">Equipo 2</label>
-        <input type="text" id="inp-equipo2"
-               placeholder="Nombre del equipo" maxlength="40" autocomplete="off">
+        <label for="sel-equipo2">Equipo 2</label>
+        <select id="sel-equipo2" disabled>
+          <option value="">-- Selecciona disciplina --</option>
+        </select>
       </div>
     </div>
 
@@ -368,11 +370,32 @@
   const LS_KEY  = 'fixture_sorteo_data';
   const BC_NAME = 'fixture_sorteo_channel';
 
+  const TEAMS_BY_DISCIPLINE = {
+    'Pádel': [
+      'Bicampeones', 'Doble Energía Pampilla', 'El dúo de la historia',
+      'Los doble falta', 'Par técnico', 'Henry Cup', 'Dúo dinamita',
+      'Torres gemelas', 'Six-Seven', 'One CYC'
+    ],
+    'Fútbol masculino': [
+      'Movilidad con ALMA FC', 'Real Blending F.C.', 'Atlético Octano',
+      'Los Ejecutores', 'Alto Octanaje FC', 'Real E&P',
+      'Supply & Trading', 'CFO', 'Los Re-Finos F.C.'
+    ],
+    'Fútbol femenino': [
+      'Energía Femenina', 'Motomamis FC', 'Focus Mode FC'
+    ],
+    'Vóley mixto': [
+      'Bloque técnico', 'Bloqueo 57', 'Octanaje Implacable',
+      'Servicios Globales', 'Repsolitos Pyoneros', 'Energía 360',
+      'Energizados Pampilla', 'Latinita Repsol', 'Pampilla Lovers', 'Repvol'
+    ]
+  };
+
   /** Mapeo de disciplina → clase CSS del badge en el dashboard. */
   const DISC_BADGE_CLASS = {
     'Vóley mixto':       'disc-voley-mixto',
     'Fútbol masculino':  'disc-futbol-masculino',
-    'Vóley femenino':    'disc-voley-femenino',
+    'Fútbol femenino':   'disc-voley-femenino',
     'Pádel':             'disc-padel'
   };
 
@@ -421,8 +444,8 @@
    */
   function addVersus() {
     const disciplina = document.getElementById('sel-disciplina').value.trim();
-    const equipo1    = document.getElementById('inp-equipo1').value.trim();
-    const equipo2    = document.getElementById('inp-equipo2').value.trim();
+    const equipo1    = document.getElementById('sel-equipo1').value;
+    const equipo2    = document.getElementById('sel-equipo2').value;
 
     // Validaciones de entrada
     if (!disciplina)                                    return showError('Debes seleccionar una disciplina.');
@@ -447,10 +470,9 @@
     saveToStorage();
     broadcast('ADD', { versus, allData: fixture });
 
-    // Limpiar campos de equipo (mantiene la disciplina seleccionada)
-    document.getElementById('inp-equipo1').value = '';
-    document.getElementById('inp-equipo2').value = '';
-    document.getElementById('inp-equipo1').focus();
+    // Actualizar selects excluyendo los equipos ya usados
+    refreshTeamSelects(disciplina);
+    document.getElementById('sel-equipo1').focus();
 
     showSuccess(`"${equipo1} vs ${equipo2}" añadido correctamente.`);
     renderList();
@@ -466,6 +488,7 @@
     broadcast('UNDO', { allData: fixture });
     showSuccess(`Deshecho: "${removed.equipo1} vs ${removed.equipo2}".`);
     renderList();
+    refreshTeamSelects(document.getElementById('sel-disciplina').value);
   }
 
   /**
@@ -479,6 +502,7 @@
     broadcast('CLEAR', { allData: [] });
     showSuccess('Fixture limpiado correctamente.');
     renderList();
+    refreshTeamSelects(document.getElementById('sel-disciplina').value);
   }
 
   /**
@@ -493,6 +517,7 @@
     broadcast('REMOVE', { id: removed.id, allData: fixture });
     showSuccess(`"${removed.equipo1} vs ${removed.equipo2}" eliminado.`);
     renderList();
+    refreshTeamSelects(document.getElementById('sel-disciplina').value);
   }
 
   // =========================================================================
@@ -693,8 +718,37 @@
   document.getElementById('btn-limpiar').addEventListener('click', clearFixture);
   document.getElementById('btn-exportar').addEventListener('click', exportExcel);
 
+  function getAvailableTeams(disciplina) {
+    const all  = TEAMS_BY_DISCIPLINE[disciplina] || [];
+    const used = fixture
+      .filter(v => v.disciplina === disciplina)
+      .flatMap(v => [v.equipo1, v.equipo2]);
+    return all.filter(t => !used.includes(t));
+  }
+
+  function refreshTeamSelects(disciplina) {
+    const teams = getAvailableTeams(disciplina);
+    ['sel-equipo1', 'sel-equipo2'].forEach(id => {
+      const sel = document.getElementById(id);
+      sel.innerHTML = '<option value="">-- Selecciona equipo --</option>';
+      teams.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      });
+      sel.disabled = teams.length === 0;
+      sel.value = '';
+    });
+  }
+
+  // Cargar equipos al cambiar disciplina
+  document.getElementById('sel-disciplina').addEventListener('change', function () {
+    refreshTeamSelects(this.value);
+  });
+
   // Presionar Enter desde cualquier campo del formulario agrega el versus
-  ['sel-disciplina', 'inp-equipo1', 'inp-equipo2'].forEach(id => {
+  ['sel-disciplina', 'sel-equipo1', 'sel-equipo2'].forEach(id => {
     document.getElementById(id).addEventListener('keydown', e => {
       if (e.key === 'Enter') addVersus();
     });
