@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sorteo por Grupos — Animación Ruleta</title>
+  <style>
+    :root {
+      --bg1:    #062c4f;
+      --bg2:    #0a3d6b;
+      --bg3:    #0f4c81;
+      --accent: #00bcd4;
+      --radius: 18px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: Inter, system-ui, Arial, sans-serif;
+      background: linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 50%, var(--bg3) 100%);
+      color: #f1f5f9;
+      padding-bottom: 60px;
+    }
+
+    .top-banner { width: 100%; }
+    .top-banner__image { width: 100%; display: block; object-fit: cover; }
+
+    .hero {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 28px 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .hero h1 { font-size: clamp(22px, 4vw, 34px); font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
+    .hero .subtitle { margin-top: 6px; font-size: 14px; color: rgba(255,255,255,0.6); }
+    .badge {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-size: 13px; font-weight: 700; white-space: nowrap;
+    }
+
+    .panel { max-width: 960px; margin: 22px auto 0; padding: 0 24px; }
+    .controls {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap;
+    }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; color: rgba(255,255,255,0.5); }
+    select {
+      padding: 10px 36px 10px 14px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,0.2);
+      font-family: inherit; font-size: 14px; color: #f1f5f9;
+      background-color: rgba(255,255,255,0.1);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+      appearance: none; cursor: pointer; min-width: 210px; transition: border-color .15s;
+    }
+    select:focus  { outline: none; border-color: var(--accent); }
+    select option { background: #0a3d6b; }
+    select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn {
+      padding: 10px 26px; border: none; border-radius: 10px;
+      font-family: inherit; font-size: 14px; font-weight: 800; cursor: pointer;
+      transition: transform .08s, box-shadow .15s, opacity .15s;
+    }
+    .btn:hover   { transform: translateY(-1px); }
+    .btn:active  { transform: translateY(0); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+    .btn-primary  { background: linear-gradient(135deg, var(--accent), #0097a7); color: #fff; box-shadow: 0 4px 14px rgba(0,188,212,0.3); }
+    .btn-primary:hover { box-shadow: 0 6px 18px rgba(0,188,212,0.4); }
+    .btn-secondary { background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.8); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.16); }
+
+    .countries-section { max-width: 960px; margin: 22px auto 0; padding: 0 24px; }
+    .countries-section-inner {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px; padding: 16px 18px;
+    }
+    .countries-section-label {
+      font-size: 11px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.7px; color: rgba(255,255,255,0.45); margin-bottom: 14px;
+    }
+    .country-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .country-item {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 10px 12px; min-width: 74px;
+    }
+    .country-item img { width: 48px; height: 34px; object-fit: cover; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+    .country-item span { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.8); text-align: center; line-height: 1.2; }
+
+    .groups-area { max-width: 960px; margin: 28px auto 0; padding: 0 24px; display: flex; gap: 20px; flex-wrap: wrap; }
+    .groups-area.single { justify-content: center; }
+    .group-card { flex: 1; min-width: 200px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: var(--radius); overflow: hidden; }
+    .groups-area.single .group-card { flex: 0 0 320px; }
+    .group-header { background: rgba(0,188,212,0.12); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 12px 18px; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
+    .group-slots { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+    .slot { height: 54px; perspective: 700px; }
+    .slot-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform .55s cubic-bezier(.4,0,.2,1); }
+    .slot.flipped .slot-inner { transform: rotateY(180deg); }
+    .slot-front, .slot-back {
+      position: absolute; inset: 0; border-radius: 10px;
+      backface-visibility: hidden; display: flex; align-items: center; padding: 0 14px; gap: 10px;
+    }
+    .slot-front { background: rgba(255,255,255,0.04); border: 1.5px dashed rgba(255,255,255,0.12); }
+    .slot-front .pos { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.22); min-width: 28px; }
+    .slot-front .placeholder-bar { height: 8px; width: 72px; background: rgba(255,255,255,0.06); border-radius: 999px; }
+    .slot-back { background: rgba(255,255,255,0.09); border: 1.5px solid rgba(255,255,255,0.18); transform: rotateY(180deg); }
+    .slot-back .pos { font-size: 13px; font-weight: 900; color: var(--accent); min-width: 28px; }
+    .slot-back .sep { font-size: 12px; color: rgba(255,255,255,0.3); }
+    .slot-back .flag { width: 34px; height: 24px; object-fit: cover; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); flex-shrink: 0; }
+    .slot-back .country-name { font-size: 14px; font-weight: 700; color: #f1f5f9; }
+
+    /* ── Ruleta: estado girando ── */
+    .slot-front.spinning {
+      border-style: solid;
+      border-color: rgba(0,188,212,0.35);
+      animation: reel-pulse 0.15s infinite alternate;
+    }
+    @keyframes reel-pulse {
+      from { background: rgba(0,188,212,0.03); }
+      to   { background: rgba(0,188,212,0.10); }
+    }
+    .slot-front.locked {
+      background: rgba(0,188,212,0.14);
+      border-style: solid;
+      border-color: rgba(0,188,212,0.55);
+      animation: none;
+    }
+    .slot-front .spin-flag {
+      width: 34px; height: 24px;
+      object-fit: cover; border-radius: 4px; flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .slot-front .spin-name { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.9); }
+
+    @media (max-width: 620px) {
+      .hero { flex-direction: column; align-items: flex-start; }
+      .groups-area, .groups-area.single { flex-direction: column; }
+      .groups-area.single .group-card { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-banner">
+    <img src="repsol.png" alt="Banner Repsol" class="top-banner__image">
+  </div>
+
+  <section class="hero">
+    <div>
+      <h1>Sorteo por Grupos</h1>
+      <div class="subtitle">Animación: Ruleta de banderas</div>
+    </div>
+    <div class="badge">⚽ 🏐 Dinámica oficial</div>
+  </section>
+
+  <div class="panel">
+    <div class="controls">
+      <div class="field">
+        <label for="sel-cat">Disciplina</label>
+        <select id="sel-cat">
+          <option value="futbol_masculino">Fútbol Masculino</option>
+          <option value="futbol_femenino">Fútbol Femenino</option>
+          <option value="voley_mixto">Vóley Mixto</option>
+          <option value="padel">Pádel</option>
+        </select>
+      </div>
+      <button id="btn-sort"  class="btn btn-primary">Sortear</button>
+      <button id="btn-reset" class="btn btn-secondary">Reset</button>
+    </div>
+  </div>
+
+  <div class="countries-section">
+    <div class="countries-section-inner">
+      <div class="countries-section-label">Países disponibles para el sorteo</div>
+      <div id="country-grid" class="country-grid"></div>
+    </div>
+  </div>
+
+  <div id="groups-area" class="groups-area"></div>
+
+  <script>
+    const FLAG_CDN = code => `https://flagcdn.com/w80/${code}.png`;
+    const FLAG_SVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='24'%3E%3Crect width='34' height='24' rx='4' fill='%23334155'/%3E%3Ctext x='17' y='17' text-anchor='middle' font-size='12' fill='%2394a3b8'%3E?%3C/text%3E%3C/svg%3E`;
+
+    const CONFIG = {
+      futbol_masculino: {
+        label: 'Fútbol Masculino',
+        countries: [
+          { name: 'Francia',      code: 'fr'     },
+          { name: 'España',       code: 'es'     },
+          { name: 'Argentina',    code: 'ar'     },
+          { name: 'Inglaterra',   code: 'gb-eng' },
+          { name: 'Brasil',       code: 'br'     },
+          { name: 'Portugal',     code: 'pt'     },
+          { name: 'Marruecos',    code: 'ma'     },
+          { name: 'Países Bajos', code: 'nl'     },
+          { name: 'Ecuador',      code: 'ec'     }
+        ],
+        groups: [
+          { name: 'GRUPO A', prefix: 'A', size: 3 },
+          { name: 'GRUPO B', prefix: 'B', size: 3 },
+          { name: 'GRUPO C', prefix: 'C', size: 3 }
+        ]
+      },
+      futbol_femenino: {
+        label: 'Fútbol Femenino',
+        countries: [
+          { name: 'Bélgica',  code: 'be' },
+          { name: 'Alemania', code: 'de' },
+          { name: 'Colombia', code: 'co' }
+        ],
+        groups: [{ name: 'GRUPO A', prefix: 'F', size: 3 }]
+      },
+      voley_mixto: {
+        label: 'Vóley Mixto',
+        countries: [
+          { name: 'Croacia',       code: 'hr' },
+          { name: 'Uruguay',       code: 'uy' },
+          { name: 'Suiza',         code: 'ch' },
+          { name: 'México',        code: 'mx' },
+          { name: 'EEUU',          code: 'us' },
+          { name: 'Japón',         code: 'jp' },
+          { name: 'Senegal',       code: 'sn' },
+          { name: 'Irán',          code: 'ir' },
+          { name: 'Corea del Sur', code: 'kr' },
+          { name: 'Perú',          code: 'pe' }
+        ],
+        groups: [
+          { name: 'GRUPO A', prefix: 'A', size: 5 },
+          { name: 'GRUPO B', prefix: 'B', size: 5 }
+        ]
+      },
+      padel: {
+        label: 'Pádel',
+        constrained: ['at', 'eg', 'ca', 'tr'],
+        countries: [
+          { name: 'Austria',        code: 'at' },
+          { name: 'Canadá',         code: 'ca' },
+          { name: 'Australia',      code: 'au' },
+          { name: 'Noruega',        code: 'no' },
+          { name: 'Panamá',         code: 'pa' },
+          { name: 'Arabia Saudita', code: 'sa' },
+          { name: 'Paraguay',       code: 'py' },
+          { name: 'Suecia',         code: 'se' },
+          { name: 'Egipto',         code: 'eg' },
+          { name: 'Turquía',        code: 'tr' }
+        ],
+        groups: [
+          { name: 'GRUPO A', prefix: 'A', size: 5 },
+          { name: 'GRUPO B', prefix: 'B', size: 5 }
+        ]
+      }
+    };
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function getConstrainedShuffle(cfg) {
+      // Pares de slots que SOLO se enfrentan en Fecha 2 (nunca en Fecha 1)
+      // Fecha 1: {1-2},{3-4},{1-3},{2-5},{1-4}  →  seguros: {1-5},{2-3},{2-4},{3-5},{4-5}
+      const SAFE_PAIRS = [[1,5],[2,3],[2,4],[3,5],[4,5]];
+
+      const special  = new Set(cfg.constrained);
+      const specials = shuffle(cfg.countries.filter(c => special.has(c.code)));
+      const normals  = shuffle(cfg.countries.filter(c => !special.has(c.code)));
+
+      const result = [];
+      for (let gi = 0; gi < cfg.groups.length; gi++) {
+        const size = cfg.groups[gi].size;
+        const grpSpecials = specials.splice(0, 2);
+        const grpNormals  = normals.splice(0, size - 2);
+
+        // Elegir un par seguro al azar y asignar los 2 especiales a esas posiciones
+        const [p1, p2] = SAFE_PAIRS[Math.floor(Math.random() * SAFE_PAIRS.length)];
+        const [s1, s2] = shuffle(grpSpecials);
+
+        const group = Array(size).fill(null);
+        group[p1 - 1] = s1;
+        group[p2 - 1] = s2;
+
+        const shuffledNormals = shuffle(grpNormals);
+        let ni = 0;
+        for (let i = 0; i < size; i++) {
+          if (group[i] === null) group[i] = shuffledNormals[ni++];
+        }
+        result.push(...group);
+      }
+      return result;
+    }
+
+    function flagError(img) { img.onerror = null; img.src = FLAG_SVG; img.style.opacity = '0.5'; }
+
+    function renderCountriesPreview(cfg) {
+      document.getElementById('country-grid').innerHTML = cfg.countries.map(c =>
+        `<div class="country-item">
+           <img src="${FLAG_CDN(c.code)}" alt="${c.name}" onerror="flagError(this)">
+           <span>${c.name}</span>
+         </div>`
+      ).join('');
+    }
+
+    function renderEmpty(cfg) {
+      const area = document.getElementById('groups-area');
+      area.className = 'groups-area' + (cfg.groups.length === 1 ? ' single' : '');
+      area.innerHTML = cfg.groups.map(g =>
+        `<div class="group-card">
+           <div class="group-header">${g.name}</div>
+           <div class="group-slots">
+             ${Array.from({ length: g.size }, (_, i) => {
+               const pos = `${g.prefix}${i + 1}`;
+               return `<div class="slot" id="slot-${pos}">
+                 <div class="slot-inner">
+                   <div class="slot-front">
+                     <span class="pos">${pos}</span>
+                     <span class="placeholder-bar"></span>
+                   </div>
+                   <div class="slot-back"></div>
+                 </div>
+               </div>`;
+             }).join('')}
+           </div>
+         </div>`
+      ).join('');
+    }
+
+    function setControls(disabled) {
+      document.getElementById('btn-sort').disabled  = disabled;
+      document.getElementById('btn-reset').disabled = disabled;
+      document.getElementById('sel-cat').disabled   = disabled;
+    }
+
+    let busy = false;
+
+    function doSort() {
+      if (busy) return;
+      const cfg      = CONFIG[document.getElementById('sel-cat').value];
+      const shuffled = cfg.constrained ? getConstrainedShuffle(cfg) : shuffle(cfg.countries);
+      const slots    = cfg.groups.flatMap(g =>
+        Array.from({ length: g.size }, (_, i) => `${g.prefix}${i + 1}`)
+      );
+
+      renderEmpty(cfg);
+      busy = true;
+      setControls(true);
+
+      // Inicializar estado "girando" en todos los slots simultáneamente
+      slots.forEach(pos => {
+        const front = document.getElementById(`slot-${pos}`).querySelector('.slot-front');
+        const first = cfg.countries[0];
+        front.classList.add('spinning');
+        front.innerHTML = `
+          <span class="pos">${pos}</span>
+          <img class="spin-flag" src="${FLAG_CDN(first.code)}" alt="" onerror="flagError(this)">
+          <span class="spin-name">${first.name}</span>`;
+      });
+
+      // Ciclar banderas rápidamente (cada slot empieza en índice aleatorio)
+      const intervals = {};
+      slots.forEach(pos => {
+        const front = document.getElementById(`slot-${pos}`).querySelector('.slot-front');
+        let tick = Math.floor(Math.random() * cfg.countries.length);
+        intervals[pos] = setInterval(() => {
+          tick = (tick + 1) % cfg.countries.length;
+          const c = cfg.countries[tick];
+          front.querySelector('.spin-flag').src         = FLAG_CDN(c.code);
+          front.querySelector('.spin-name').textContent = c.name;
+        }, 90);
+      });
+
+      // Bloquear slots uno a uno con stagger
+      const SPIN_DURATION = 2200;
+      const LOCK_STAGGER  = 300;
+
+      slots.forEach((pos, j) => {
+        const country = shuffled[j];
+        setTimeout(() => {
+          clearInterval(intervals[pos]);
+          const slotEl = document.getElementById(`slot-${pos}`);
+          const front  = slotEl.querySelector('.slot-front');
+
+          // Mostrar país ganador y marcar como bloqueado
+          front.querySelector('.spin-flag').src         = FLAG_CDN(country.code);
+          front.querySelector('.spin-name').textContent = country.name;
+          front.classList.remove('spinning');
+          front.classList.add('locked');
+
+          // Flip de confirmación tras breve pausa
+          setTimeout(() => {
+            slotEl.querySelector('.slot-back').innerHTML =
+              `<span class="pos">${pos}</span>
+               <span class="sep">—</span>
+               <img class="flag" src="${FLAG_CDN(country.code)}" alt="${country.name}" onerror="flagError(this)">
+               <span class="country-name">${country.name}</span>`;
+            slotEl.classList.add('flipped');
+            if (j === slots.length - 1) {
+              setTimeout(() => { busy = false; setControls(false); }, 600);
+            }
+          }, 320);
+        }, SPIN_DURATION + j * LOCK_STAGGER);
+      });
+    }
+
+    function doReset() {
+      busy = false;
+      setControls(false);
+      const cfg = CONFIG[document.getElementById('sel-cat').value];
+      renderCountriesPreview(cfg);
+      renderEmpty(cfg);
+    }
+
+    document.getElementById('btn-sort').addEventListener('click', doSort);
+    document.getElementById('btn-reset').addEventListener('click', doReset);
+    document.getElementById('sel-cat').addEventListener('change', doReset);
+
+    const _cfg = CONFIG[document.getElementById('sel-cat').value];
+    renderCountriesPreview(_cfg);
+    renderEmpty(_cfg);
+  </script>
+
+</body>
+</html>
