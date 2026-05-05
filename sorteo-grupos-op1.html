@@ -122,7 +122,7 @@
     .slot-back .pos { font-size: 13px; font-weight: 900; color: var(--accent); min-width: 28px; }
     .slot-back .sep { font-size: 12px; color: rgba(255,255,255,0.3); }
     .slot-back .flag { width: 34px; height: 24px; object-fit: cover; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); flex-shrink: 0; }
-    .slot-back .country-name { font-size: 14px; font-weight: 700; color: #f1f5f9; }
+    .slot-back .country-name { font-size: 12px; font-weight: 700; color: #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     /* ── Ruleta: estado girando ── */
     .slot-front.spinning {
@@ -234,6 +234,7 @@
       <div class="field">
         <label for="sel-cat">Disciplina</label>
         <select id="sel-cat">
+          <option value="prueba">PRUEBA</option>
           <option value="futbol_masculino">Fútbol Masculino</option>
           <option value="futbol_femenino">Fútbol Femenino</option>
           <option value="voley_mixto">Vóley Mixto</option>
@@ -268,15 +269,15 @@
       futbol_masculino: {
         label: 'Fútbol Masculino',
         countries: [
-          { name: 'Francia',      code: 'fr'     },
-          { name: 'España',       code: 'es'     },
-          { name: 'Argentina',    code: 'ar'     },
-          { name: 'Inglaterra',   code: 'gb-eng' },
-          { name: 'Brasil',       code: 'br'     },
-          { name: 'Portugal',     code: 'pt'     },
-          { name: 'Marruecos',    code: 'ma'     },
-          { name: 'Países Bajos', code: 'nl'     },
-          { name: 'Ecuador',      code: 'ec'     }
+          { name: 'Francia',      code: 'fr',     team: 'CFO'                  },
+          { name: 'España',       code: 'es',     team: 'Alto Octanaje FC'     },
+          { name: 'Argentina',    code: 'ar',     team: 'Real Blending F.C.'   },
+          { name: 'Inglaterra',   code: 'gb-eng', team: 'Atlético Octano'      },
+          { name: 'Brasil',       code: 'br',     team: 'Los Ejecutores'       },
+          { name: 'Portugal',     code: 'pt',     team: 'Real E&P'             },
+          { name: 'Marruecos',    code: 'ma',     team: 'Supply & Trading'     },
+          { name: 'Países Bajos', code: 'nl',     team: 'Movilidad con ALMA FC'},
+          { name: 'Ecuador',      code: 'ec',     team: 'Los Re-Finos F.C.'    }
         ],
         groups: [
           { name: 'GRUPO A', prefix: 'A', size: 3 },
@@ -287,25 +288,25 @@
       futbol_femenino: {
         label: 'Fútbol Femenino',
         countries: [
-          { name: 'Bélgica',  code: 'be' },
-          { name: 'Alemania', code: 'de' },
-          { name: 'Colombia', code: 'co' }
+          { name: 'Bélgica',  code: 'be', team: 'Motomamis FC'   },
+          { name: 'Alemania', code: 'de', team: 'Energía Femenina'},
+          { name: 'Colombia', code: 'co', team: 'Focus Mode FC'  }
         ],
-        groups: [{ name: 'GRUPO A', prefix: 'F', size: 3 }]
+        groups: [{ name: 'GRUPO A', prefix: 'A', size: 3 }]
       },
       voley_mixto: {
         label: 'Vóley Mixto',
         countries: [
-          { name: 'Croacia',       code: 'hr' },
-          { name: 'Uruguay',       code: 'uy' },
-          { name: 'Suiza',         code: 'ch' },
-          { name: 'México',        code: 'mx' },
-          { name: 'EEUU',          code: 'us' },
-          { name: 'Japón',         code: 'jp' },
-          { name: 'Senegal',       code: 'sn' },
-          { name: 'Irán',          code: 'ir' },
-          { name: 'Corea del Sur', code: 'kr' },
-          { name: 'Perú',          code: 'pe' }
+          { name: 'Croacia',       code: 'hr', team: 'Bloque técnico'      },
+          { name: 'Uruguay',       code: 'uy', team: 'Servicios Globales'  },
+          { name: 'Suiza',         code: 'ch', team: 'Repvol'              },
+          { name: 'México',        code: 'mx', team: 'Octanaje Implacable' },
+          { name: 'EEUU',          code: 'us', team: 'Pampilla Lovers'     },
+          { name: 'Japón',         code: 'jp', team: 'Energía 360'         },
+          { name: 'Senegal',       code: 'sn', team: 'Latinita Repsol'     },
+          { name: 'Irán',          code: 'ir', team: 'Repsolitos Pyoneros' },
+          { name: 'Corea del Sur', code: 'kr', team: 'Bloqueo 57'          },
+          { name: 'Perú',          code: 'pe', team: 'Energizados Pampilla'}
         ],
         groups: [
           { name: 'GRUPO A', prefix: 'A', size: 5 },
@@ -316,20 +317,39 @@
         label: 'Pádel',
         constrained: ['at', 'eg', 'ca', 'tr'],
         countries: [
-          { name: 'Austria',        code: 'at' },
-          { name: 'Canadá',         code: 'ca' },
-          { name: 'Australia',      code: 'au' },
-          { name: 'Noruega',        code: 'no' },
-          { name: 'Panamá',         code: 'pa' },
-          { name: 'Arabia Saudita', code: 'sa' },
-          { name: 'Paraguay',       code: 'py' },
-          { name: 'Suecia',         code: 'se' },
-          { name: 'Egipto',         code: 'eg' },
-          { name: 'Turquía',        code: 'tr' }
+          { name: 'Austria',        code: 'at', team: 'Bicampeones'          },
+          { name: 'Canadá',         code: 'ca', team: 'Six-Seven'            },
+          { name: 'Australia',      code: 'au', team: 'Par técnico'          },
+          { name: 'Noruega',        code: 'no', team: 'Torres gemelas'       },
+          { name: 'Panamá',         code: 'pa', team: 'Dúo dinamita'         },
+          { name: 'Arabia Saudita', code: 'sa', team: 'One CYC'              },
+          { name: 'Paraguay',       code: 'py', team: 'El dúo de la historia'},
+          { name: 'Suecia',         code: 'se', team: 'Henry Cup'            },
+          { name: 'Egipto',         code: 'eg', team: 'Los doble falta'      },
+          { name: 'Turquía',        code: 'tr', team: 'MP'                   }
         ],
         groups: [
           { name: 'GRUPO A', prefix: 'A', size: 5 },
           { name: 'GRUPO B', prefix: 'B', size: 5 }
+        ]
+      },
+      prueba: {
+        label: 'PRUEBA',
+        countries: [
+          { name: 'Equipo 1', code: 'ar' },
+          { name: 'Equipo 2', code: 'br' },
+          { name: 'Equipo 3', code: 'de' },
+          { name: 'Equipo 4', code: 'fr' },
+          { name: 'Equipo 5', code: 'gb' },
+          { name: 'Equipo 6', code: 'it' },
+          { name: 'Equipo 7', code: 'jp' },
+          { name: 'Equipo 8', code: 'mx' },
+          { name: 'Equipo 9', code: 'us' }
+        ],
+        groups: [
+          { name: 'GRUPO A', prefix: 'A', size: 3 },
+          { name: 'GRUPO B', prefix: 'B', size: 3 },
+          { name: 'GRUPO C', prefix: 'C', size: 3 }
         ]
       }
     };
@@ -382,7 +402,7 @@
       document.getElementById('country-grid').innerHTML = cfg.countries.map(c =>
         `<div class="country-item">
            <img src="${FLAG_CDN(c.code)}" alt="${c.name}" onerror="flagError(this)">
-           <span>${c.name}</span>
+           <span>${c.team || c.name}</span>
          </div>`
       ).join('');
     }
@@ -439,7 +459,7 @@
         front.innerHTML = `
           <span class="pos">${pos}</span>
           <img class="spin-flag" src="${FLAG_CDN(first.code)}" alt="" onerror="flagError(this)">
-          <span class="spin-name">${first.name}</span>`;
+          <span class="spin-name">${first.team || first.name}</span>`;
       });
 
       // Ciclar banderas rápidamente (cada slot empieza en índice aleatorio)
@@ -451,7 +471,7 @@
           tick = (tick + 1) % cfg.countries.length;
           const c = cfg.countries[tick];
           front.querySelector('.spin-flag').src         = FLAG_CDN(c.code);
-          front.querySelector('.spin-name').textContent = c.name;
+          front.querySelector('.spin-name').textContent = c.team || c.name;
         }, 90);
       });
 
@@ -468,7 +488,7 @@
 
           // Mostrar país ganador y marcar como bloqueado
           front.querySelector('.spin-flag').src         = FLAG_CDN(country.code);
-          front.querySelector('.spin-name').textContent = country.name;
+          front.querySelector('.spin-name').textContent = country.team || country.name;
           front.classList.remove('spinning');
           front.classList.add('locked');
 
@@ -478,7 +498,7 @@
               `<span class="pos">${pos}</span>
                <span class="sep">—</span>
                <img class="flag" src="${FLAG_CDN(country.code)}" alt="${country.name}" onerror="flagError(this)">
-               <span class="country-name">${country.name}</span>`;
+               <span class="country-name">${country.team || country.name}</span>`;
             slotEl.classList.add('flipped');
             if (j === slots.length - 1) {
               setTimeout(() => {
