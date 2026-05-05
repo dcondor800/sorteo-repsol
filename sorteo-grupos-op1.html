@@ -147,6 +147,67 @@
     }
     .slot-front .spin-name { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.9); }
 
+    .pdf-action {
+      max-width: 960px;
+      margin: 24px auto 0;
+      padding: 0 24px;
+      display: flex;
+      justify-content: center;
+    }
+    #btn-pdf {
+      display: none;
+      background: linear-gradient(135deg, #4ade80, #16a34a);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(74,222,128,0.35);
+      padding: 12px 36px;
+      font-size: 15px;
+    }
+    #btn-pdf:hover { box-shadow: 0 6px 20px rgba(74,222,128,0.5); }
+
+    .print-header { display: none; }
+
+    @media print {
+      body { background: #fff !important; color: #111 !important; padding: 0; }
+      .hero, .panel, .countries-section, .pdf-action { display: none !important; }
+      .top-banner__image { width: 100%; max-height: none; object-fit: cover; }
+      .print-header {
+        display: block;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #0369a1;
+        margin: 16px 0 20px;
+      }
+      .groups-area {
+        margin: 0 auto;
+        max-width: 100%;
+        gap: 16px;
+      }
+      .group-card {
+        background: #f0f9ff !important;
+        border: 1.5px solid #bae6fd !important;
+        break-inside: avoid;
+      }
+      .group-header {
+        background: #bae6fd !important;
+        color: #075985 !important;
+        border-bottom: 1px solid #7dd3fc !important;
+      }
+      .slot-front { display: none !important; }
+      .slot-inner { transform: none !important; }
+      .slot-back {
+        transform: none !important;
+        backface-visibility: visible !important;
+        background: #fff !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+      .slot-back .pos { color: #0369a1 !important; }
+      .slot-back .sep { color: #94a3b8 !important; }
+      .slot-back .country-name { color: #1e293b !important; }
+    }
+
     @media (max-width: 620px) {
       .hero { flex-direction: column; align-items: flex-start; }
       .groups-area, .groups-area.single { flex-direction: column; }
@@ -191,7 +252,13 @@
     </div>
   </div>
 
+  <div class="print-header">Sorteo por Grupos — Resultado</div>
+
   <div id="groups-area" class="groups-area"></div>
+
+  <div class="pdf-action">
+    <button id="btn-pdf" class="btn btn-primary" onclick="window.print()">Guardar como PDF</button>
+  </div>
 
   <script>
     const FLAG_CDN = code => `https://flagcdn.com/w80/${code}.png`;
@@ -414,7 +481,12 @@
                <span class="country-name">${country.name}</span>`;
             slotEl.classList.add('flipped');
             if (j === slots.length - 1) {
-              setTimeout(() => { busy = false; setControls(false); }, 600);
+              setTimeout(() => {
+                busy = false;
+                setControls(false);
+                document.querySelector('.print-header').textContent = 'Sorteo por Grupos — ' + cfg.label;
+                document.getElementById('btn-pdf').style.display = 'inline-block';
+              }, 600);
             }
           }, 320);
         }, SPIN_DURATION + j * LOCK_STAGGER);
@@ -424,6 +496,7 @@
     function doReset() {
       busy = false;
       setControls(false);
+      document.getElementById('btn-pdf').style.display = 'none';
       const cfg = CONFIG[document.getElementById('sel-cat').value];
       renderCountriesPreview(cfg);
       renderEmpty(cfg);
