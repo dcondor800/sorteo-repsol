@@ -27,7 +27,7 @@
     .top-banner__image { width: 100%; display: block; object-fit: cover; }
 
     .hero {
-      max-width: 960px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: 28px 24px 0;
       display: flex;
@@ -45,7 +45,7 @@
       font-size: 13px; font-weight: 700; white-space: nowrap;
     }
 
-    .panel { max-width: 960px; margin: 22px auto 0; padding: 0 24px; }
+    .panel { max-width: 1100px; margin: 22px auto 0; padding: 0 24px; }
     .controls {
       background: rgba(255,255,255,0.07);
       border: 1px solid rgba(255,255,255,0.12);
@@ -82,7 +82,7 @@
     .btn-secondary { background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.8); }
     .btn-secondary:hover { background: rgba(255,255,255,0.16); }
 
-    .countries-section { max-width: 960px; margin: 22px auto 0; padding: 0 24px; }
+    .countries-section { max-width: 1100px; margin: 22px auto 0; padding: 0 24px; }
     .countries-section-inner {
       background: rgba(255,255,255,0.05);
       border: 1px solid rgba(255,255,255,0.12);
@@ -101,14 +101,14 @@
     .country-item img { width: 48px; height: 34px; object-fit: cover; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
     .country-item span { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.8); text-align: center; line-height: 1.2; }
 
-    .groups-area { max-width: 960px; margin: 28px auto 0; padding: 0 24px; display: flex; gap: 20px; flex-wrap: wrap; }
+    .groups-area { max-width: 1100px; margin: 28px auto 0; padding: 0 24px; display: flex; gap: 20px; flex-wrap: wrap; }
     .groups-area.single { justify-content: center; }
     .group-card { flex: 1; min-width: 200px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: var(--radius); overflow: hidden; }
     .groups-area.single .group-card { flex: 0 0 320px; }
     .group-header { background: rgba(0,188,212,0.12); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 12px 18px; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
     .group-slots { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
 
-    .slot { height: 54px; perspective: 700px; }
+    .slot { height: 66px; perspective: 700px; }
     .slot-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform .55s cubic-bezier(.4,0,.2,1); }
     .slot.flipped .slot-inner { transform: rotateY(180deg); }
     .slot-front, .slot-back {
@@ -122,7 +122,9 @@
     .slot-back .pos { font-size: 13px; font-weight: 900; color: var(--accent); min-width: 28px; }
     .slot-back .sep { font-size: 12px; color: rgba(255,255,255,0.3); }
     .slot-back .flag { width: 34px; height: 24px; object-fit: cover; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); flex-shrink: 0; }
-    .slot-back .country-name { font-size: 12px; font-weight: 700; color: #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .slot-text { display: flex; flex-direction: column; gap: 2px; overflow: hidden; min-width: 0; }
+    .slot-back .country-name { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .slot-back .team-name { font-size: 12px; font-weight: 700; color: #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     /* ── Ruleta: estado girando ── */
     .slot-front.spinning {
@@ -148,7 +150,7 @@
     .slot-front .spin-name { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.9); }
 
     .pdf-action {
-      max-width: 960px;
+      max-width: 1100px;
       margin: 24px auto 0;
       padding: 0 24px;
       display: flex;
@@ -205,7 +207,8 @@
       }
       .slot-back .pos { color: #0369a1 !important; }
       .slot-back .sep { color: #94a3b8 !important; }
-      .slot-back .country-name { color: #1e293b !important; }
+      .slot-back .country-name { color: #64748b !important; }
+      .slot-back .team-name { color: #1e293b !important; }
     }
 
     @media (max-width: 620px) {
@@ -326,7 +329,7 @@
           { name: 'Paraguay',       code: 'py', team: 'El dúo de la historia'},
           { name: 'Suecia',         code: 'se', team: 'Henry Cup'            },
           { name: 'Egipto',         code: 'eg', team: 'Los doble falta'      },
-          { name: 'Turquía',        code: 'tr', team: 'MP'                   }
+          { name: 'Turquía',        code: 'tr', team: 'Doble Energía Pampilla'}
         ],
         groups: [
           { name: 'GRUPO A', prefix: 'A', size: 5 },
@@ -402,7 +405,7 @@
       document.getElementById('country-grid').innerHTML = cfg.countries.map(c =>
         `<div class="country-item">
            <img src="${FLAG_CDN(c.code)}" alt="${c.name}" onerror="flagError(this)">
-           <span>${c.team || c.name}</span>
+           <span>${c.name}</span>
          </div>`
       ).join('');
     }
@@ -498,7 +501,10 @@
               `<span class="pos">${pos}</span>
                <span class="sep">—</span>
                <img class="flag" src="${FLAG_CDN(country.code)}" alt="${country.name}" onerror="flagError(this)">
-               <span class="country-name">${country.team || country.name}</span>`;
+               <div class="slot-text">
+                 <span class="country-name">${country.name}</span>
+                 ${country.team ? `<span class="team-name">${country.team}</span>` : ''}
+               </div>`;
             slotEl.classList.add('flipped');
             if (j === slots.length - 1) {
               setTimeout(() => {
