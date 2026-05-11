@@ -244,17 +244,28 @@
         border-bottom: 1px solid #7dd3fc !important;
       }
       .slot-front { display: none !important; }
-      .slot-inner { transform: none !important; }
+      .slot-inner { transform: none !important; transform-style: flat !important; position: static !important; }
       .slot-back {
         transform: none !important;
         backface-visibility: visible !important;
         background: #fff !important;
         border: 1px solid #cbd5e1 !important;
       }
+      .slot { height: auto !important; margin-bottom: 6px; }
+      .slot-inner { height: auto !important; }
+      .slot-back {
+        position: relative !important;
+        transform: none !important;
+        backface-visibility: visible !important;
+        background: #fff !important;
+        border: 1px solid #cbd5e1 !important;
+        padding: 8px 12px !important;
+        height: auto !important;
+      }
       .slot-back .pos { color: #0369a1 !important; }
-      .slot-back .sep { color: #94a3b8 !important; }
-      .slot-back .country-name { color: #64748b !important; }
-      .slot-back .team-name { color: #1e293b !important; }
+      .slot-back .country-name { white-space: normal !important; text-overflow: unset !important; overflow: visible !important; color: #64748b !important; }
+      .slot-back .team-name { white-space: normal !important; text-overflow: unset !important; overflow: visible !important; color: #1e293b !important; }
+      .slot-text { overflow: visible !important; }
     }
 
     @media (max-width: 620px) {
@@ -534,7 +545,7 @@
         const slotEl  = document.getElementById(`slot-${pos}`);
         slotEl.querySelector('.slot-back').innerHTML =
           `<span class="pos">${pos}</span>
-           <span class="sep">—</span>
+
            <img class="flag" src="${FLAG_CDN(country.code)}" alt="${country.name}" onerror="flagError(this)">
            <div class="slot-text">
              <span class="country-name">${country.name}</span>
@@ -619,7 +630,7 @@
           setTimeout(() => {
             slotEl.querySelector('.slot-back').innerHTML =
               `<span class="pos">${pos}</span>
-               <span class="sep">—</span>
+    
                <img class="flag" src="${FLAG_CDN(country.code)}" alt="${country.name}" onerror="flagError(this)">
                <div class="slot-text">
                  <span class="country-name">${country.name}</span>
