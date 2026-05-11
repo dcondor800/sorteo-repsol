@@ -291,7 +291,7 @@
         </select>
       </div>
       <button id="btn-sort"  class="btn btn-primary">Sortear</button>
-      <button id="btn-reset" class="btn btn-secondary">Reset</button>
+      <button id="btn-reset" class="btn btn-secondary">Eliminar Sorteo</button>
     </div>
   </div>
 
@@ -491,10 +491,27 @@
       document.getElementById('sel-cat').disabled   = disabled;
     }
 
+    const LS_HISTORY = 'sorteo_grupos_op1_history';
+
     let busy = false;
     let sortCount  = 0;
     let currentView = -1;
     const sortHistory = []; // { n, label, cfgKey, slots[], shuffled[] }
+
+    function saveHistory() {
+      localStorage.setItem(LS_HISTORY, JSON.stringify({ sortCount, currentView, sortHistory }));
+    }
+
+    function loadHistory() {
+      try {
+        const raw = localStorage.getItem(LS_HISTORY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        sortCount   = saved.sortCount   || 0;
+        currentView = saved.currentView ?? -1;
+        sortHistory.push(...(saved.sortHistory || []));
+      } catch { /* datos corruptos: ignorar */ }
+    }
 
     function renderCounterUI() {
       document.getElementById('sort-counter').style.display = 'flex';
@@ -540,6 +557,7 @@
       sortCount++;
       sortHistory.push({ n: sortCount, label: CONFIG[cfgKey].label, cfgKey, slots: [...slots], shuffled: [...shuffled] });
       currentView = sortHistory.length - 1;
+      saveHistory();
       renderCounterUI();
     }
 
@@ -630,13 +648,38 @@
       renderEmpty(cfg);
     }
 
+    function doEliminarSorteo() {
+      if (busy || currentView === -1) return;
+      sortHistory.splice(currentView, 1);
+      if (sortHistory.length === 0) {
+        currentView = -1;
+        saveHistory();
+        document.getElementById('sort-counter').style.display = 'none';
+        document.getElementById('btn-pdf').style.display = 'none';
+        const cfg = CONFIG[document.getElementById('sel-cat').value];
+        renderCountriesPreview(cfg);
+        renderEmpty(cfg);
+      } else {
+        currentView = Math.min(currentView, sortHistory.length - 1);
+        saveHistory();
+        renderSlots(sortHistory[currentView]);
+        renderCounterUI();
+      }
+    }
+
     document.getElementById('btn-sort').addEventListener('click', doSort);
-    document.getElementById('btn-reset').addEventListener('click', doReset);
+    document.getElementById('btn-reset').addEventListener('click', doEliminarSorteo);
     document.getElementById('sel-cat').addEventListener('change', doReset);
 
-    const _cfg = CONFIG[document.getElementById('sel-cat').value];
-    renderCountriesPreview(_cfg);
-    renderEmpty(_cfg);
+    loadHistory();
+    if (sortHistory.length > 0) {
+      renderSlots(sortHistory[currentView]);
+      renderCounterUI();
+    } else {
+      const _cfg = CONFIG[document.getElementById('sel-cat').value];
+      renderCountriesPreview(_cfg);
+      renderEmpty(_cfg);
+    }
   </script>
 
 </body>
