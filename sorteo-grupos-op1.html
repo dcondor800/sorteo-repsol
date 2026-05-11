@@ -529,14 +529,14 @@
     function renderCounterUI() {
       document.getElementById('sort-counter').style.display = 'flex';
       const entry = sortHistory[currentView];
-      document.getElementById('sort-counter-badge').textContent = `Sorteo #${entry.n}`;
+      document.getElementById('sort-counter-badge').textContent = `Sorteo`;
       updateDeleteBtn();
 
       const start = Math.max(0, sortHistory.length - 5);
       document.getElementById('sort-counter-history').innerHTML = sortHistory.slice(start).map((h, i) => {
         const idx   = start + i;
         const active = idx === currentView ? 'current' : '';
-        return `<span class="sort-counter-chip ${active}" onclick="viewSorteo(${idx})">#${h.n} ${h.label}</span>`;
+        return `<span class="sort-counter-chip ${active}" onclick="viewSorteo(${idx})">${h.label}</span>`;
       }).join('');
     }
 
