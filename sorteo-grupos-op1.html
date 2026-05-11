@@ -642,6 +642,8 @@
               setTimeout(() => {
                 busy = false;
                 setControls(false);
+                updateSortBtn();
+                updateDeleteBtn();
                 document.querySelector('.print-header').textContent = 'Sorteo por Grupos — ' + cfg.label;
                 document.getElementById('btn-pdf').style.display = 'inline-block';
               }, 600);
@@ -654,6 +656,7 @@
     function doReset() {
       busy = false;
       setControls(false);
+      updateSortBtn();
       document.getElementById('btn-pdf').style.display = 'none';
       const cfg = CONFIG[document.getElementById('sel-cat').value];
       renderCountriesPreview(cfg);
@@ -662,6 +665,11 @@
 
     function updateDeleteBtn() {
       document.getElementById('btn-reset').disabled = currentView === -1;
+    }
+
+    function updateSortBtn() {
+      const cfgKey = document.getElementById('sel-cat').value;
+      document.getElementById('btn-sort').disabled = sortHistory.some(h => h.cfgKey === cfgKey);
     }
 
     function doEliminarSorteo() {
@@ -673,6 +681,7 @@
         currentView = -1;
         saveHistory();
         updateDeleteBtn();
+        updateSortBtn();
         document.getElementById('sort-counter').style.display = 'none';
         document.getElementById('btn-pdf').style.display = 'none';
         const cfg = CONFIG[document.getElementById('sel-cat').value];
@@ -681,6 +690,7 @@
       } else {
         currentView = Math.min(currentView, sortHistory.length - 1);
         saveHistory();
+        updateSortBtn();
         renderSlots(sortHistory[currentView]);
         renderCounterUI();
       }
@@ -694,11 +704,13 @@
     if (sortHistory.length > 0) {
       renderSlots(sortHistory[currentView]);
       renderCounterUI();
+      updateSortBtn();
     } else {
       const _cfg = CONFIG[document.getElementById('sel-cat').value];
       renderCountriesPreview(_cfg);
       renderEmpty(_cfg);
       updateDeleteBtn();
+      updateSortBtn();
     }
   </script>
 
