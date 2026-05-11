@@ -255,28 +255,33 @@ Cleanup
 | `renderCountriesPreview(cfg)` | Muestra la grilla de banderas + nombre de país de la disciplina activa. |
 | `renderEmpty(cfg)` | Renderiza los grupos con slots vacíos mostrando solo la etiqueta de posición. |
 | `doSort()` | Lanza la animación de sorteo. Llama a `getConstrainedShuffle` si `cfg.constrained` existe, o `shuffle` en caso contrario. Al terminar llama a `recordSort()`. |
-| `doReset()` | Restaura el estado inicial: preview de países + slots vacíos. No borra el historial de sorteos. |
+| `doReset()` | Restaura el estado visual inicial (preview de países + slots vacíos) sin tocar el historial. Solo se invoca al cambiar de disciplina en el `<select>`. |
 | `setControls(disabled)` | Bloquea/desbloquea select y botones durante la animación. |
 | `flagError(img)` | Mismo patrón que sorteo-paises.js: SVG placeholder inline para banderas rotas. |
 
-**Funciones exclusivas de `sorteo-grupos-op1.html` (historial y navegación):**
+**Funciones exclusivas de `sorteo-grupos-op1.html` (historial, navegación y persistencia):**
 
 | Función | Descripción |
 |---|---|
-| `recordSort(cfgKey, slots, shuffled)` | Registra el resultado completo del sorteo en `sortHistory` (`{ n, label, cfgKey, slots[], shuffled[] }`), incrementa `sortCount` y actualiza `currentView`. |
-| `renderCounterUI()` | Dibuja el badge `Sorteo #N` y los chips de historial (últimos 5). Cada chip tiene `onclick="viewSorteo(idx)"`. El chip activo se resalta en cian. |
+| `saveHistory()` | Serializa `{ sortCount, currentView, sortHistory }` en `localStorage` con clave `LS_HISTORY`. Se llama tras cada `recordSort()` y tras cada `doEliminarSorteo()`. |
+| `loadHistory()` | Restaura `sortCount`, `currentView` y `sortHistory` desde `localStorage` al cargar la página. Si los datos están corruptos los ignora silenciosamente. |
+| `recordSort(cfgKey, slots, shuffled)` | Registra el resultado completo del sorteo en `sortHistory` (`{ n, label, cfgKey, slots[], shuffled[] }`), incrementa `sortCount`, actualiza `currentView` y llama a `saveHistory()`. |
+| `renderCounterUI()` | Dibuja el badge `Sorteo #N` y los chips de historial (últimos 5). Cada chip tiene `onclick="viewSorteo(idx)"`. El chip activo se resalta en cian. También llama a `updateDeleteBtn()`. |
 | `renderSlots(entry)` | Re-renderiza los grupos con el resultado guardado de un sorteo anterior: llama a `renderEmpty()`, rellena cada slot-back con bandera + país + equipo y aplica la clase `flipped`. También actualiza el título de impresión y el botón PDF. |
 | `viewSorteo(idx)` | Navega a un sorteo del historial: actualiza `currentView`, llama a `renderSlots()` y `renderCounterUI()`. Bloqueado si `busy === true`. |
+| `updateDeleteBtn()` | Habilita el botón "Eliminar Sorteo" si `currentView !== -1`; lo deshabilita si no hay sorteo seleccionado. Se llama desde `renderCounterUI()`, `doEliminarSorteo()` (cuando el historial queda vacío) y la inicialización. |
+| `doEliminarSorteo()` | Pide confirmación (`confirm()`), elimina `sortHistory[currentView]`, llama a `saveHistory()` y actualiza la UI: si queda historial muestra el sorteo más cercano; si no, vuelve al estado vacío y oculta el contador. |
 
 **Estado global del historial (`sorteo-grupos-op1.html`):**
 
 ```js
+const LS_HISTORY = 'sorteo_grupos_op1_history'; // Clave de localStorage
 let sortCount   = 0;        // Contador total de sorteos (nunca baja)
-let currentView = -1;       // Índice en sortHistory del sorteo que se muestra
+let currentView = -1;       // Índice en sortHistory del sorteo que se muestra (-1 = ninguno)
 const sortHistory = [];     // Array de { n, label, cfgKey, slots[], shuffled[] }
 ```
 
-> El historial vive solo en memoria (se pierde al recargar la página). Los chips muestran los últimos 5 sorteos; los anteriores siguen en `sortHistory` y son accesibles si se actualiza `renderCounterUI`.
+> El historial **persiste en `localStorage`** y se restaura al recargar la página. Los chips muestran los últimos 5 sorteos; los anteriores siguen en `sortHistory` y son accesibles si se actualiza `renderCounterUI`. El botón "Eliminar Sorteo" elimina únicamente el sorteo actualmente seleccionado (con confirmación previa) y desaparece su chip de la UI.
 
 ---
 
@@ -284,10 +289,11 @@ const sortHistory = [];     // Array de { n, label, cfgKey, slots[], shuffled[] 
 
 ### Claves y canales
 
-| Elemento | Valor |
-|---|---|
-| Clave localStorage | `fixture_sorteo_data` |
-| Nombre BroadcastChannel | `fixture_sorteo_channel` |
+| Elemento | Valor | Usado por |
+|---|---|---|
+| Clave localStorage | `fixture_sorteo_data` | `dashboard-sorteo.html` ↔ `fixture-sorteo.html` |
+| Clave localStorage | `sorteo_grupos_op1_history` | `sorteo-grupos-op1.html` (historial de sorteos por grupos) |
+| Nombre BroadcastChannel | `fixture_sorteo_channel` | `dashboard-sorteo.html` ↔ `fixture-sorteo.html` |
 
 ### Estructura del objeto versus
 
@@ -431,7 +437,7 @@ Las banderas usan `https://flagcdn.com/w80/{codigo-iso}.png` (tamaño más peque
 | Archivo | Animación | Estado |
 |---|---|---|
 | `sorteo-grupos.html` | **Tarjetas volantes** — las banderas se despegan de la grilla, vuelan al centro caóticamente y luego cada una aterriza en su slot disparando el flip 3D | Versión activa |
-| `sorteo-grupos-op1.html` | **Ruleta** — todos los slots giran simultáneamente con banderas en bucle rápido, luego se frenan y bloquean uno a uno con flip de confirmación. Incluye: disciplina **PRUEBA** (9 equipos, 3 grupos) para demostrar aleatoriedad; resultado muestra bandera + país + equipo; botón "Guardar como PDF"; **contador de sorteos con historial navegable** (chips clickeables para volver a ver e imprimir cualquier resultado anterior de la sesión). | Variante de comparación |
+| `sorteo-grupos-op1.html` | **Ruleta** — todos los slots giran simultáneamente con banderas en bucle rápido, luego se frenan y bloquean uno a uno con flip de confirmación. Incluye: disciplina **PRUEBA** (9 equipos, 3 grupos) para demostrar aleatoriedad; resultado muestra bandera + país + equipo; botón "Guardar como PDF"; **contador de sorteos con historial navegable** (chips/pastillas clickeables para volver a ver e imprimir cualquier resultado anterior); **historial persistente en `localStorage`** (sobrevive a recargas de página); botón **"Eliminar Sorteo"** (deshabilitado cuando no hay selección, pide confirmación antes de borrar y elimina la pastilla de la UI). | Variante de comparación |
 | `sorteo-grupos-op3.html` | **Cuenta regresiva** — overlay oscuro con 3→2→1 animado, destello "¡SORTEO!" y confeti (90 partículas), luego reveals escalonados con flip | Variante de comparación |
 
 Para elegir una variante como definitiva: renombrar el archivo elegido a `sorteo-grupos.html` (o actualizar los enlaces que apunten a él).
