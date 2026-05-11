@@ -528,6 +528,7 @@
       document.getElementById('sort-counter').style.display = 'flex';
       const entry = sortHistory[currentView];
       document.getElementById('sort-counter-badge').textContent = `Sorteo #${entry.n}`;
+      updateDeleteBtn();
 
       const start = Math.max(0, sortHistory.length - 5);
       document.getElementById('sort-counter-history').innerHTML = sortHistory.slice(start).map((h, i) => {
@@ -659,12 +660,19 @@
       renderEmpty(cfg);
     }
 
+    function updateDeleteBtn() {
+      document.getElementById('btn-reset').disabled = currentView === -1;
+    }
+
     function doEliminarSorteo() {
       if (busy || currentView === -1) return;
+      const entry = sortHistory[currentView];
+      if (!confirm(`¿Eliminar "${entry.label} — Sorteo #${entry.n}"? Esta acción no se puede deshacer.`)) return;
       sortHistory.splice(currentView, 1);
       if (sortHistory.length === 0) {
         currentView = -1;
         saveHistory();
+        updateDeleteBtn();
         document.getElementById('sort-counter').style.display = 'none';
         document.getElementById('btn-pdf').style.display = 'none';
         const cfg = CONFIG[document.getElementById('sel-cat').value];
@@ -690,6 +698,7 @@
       const _cfg = CONFIG[document.getElementById('sel-cat').value];
       renderCountriesPreview(_cfg);
       renderEmpty(_cfg);
+      updateDeleteBtn();
     }
   </script>
 
