@@ -249,15 +249,34 @@ Cleanup
 
 | Función | Descripción |
 |---|---|
-| `CONFIG` | Objeto central con `label`, `countries[]`, `groups[]` y opcionalmente `constrained[]` por disciplina. |
+| `CONFIG` | Objeto central con `label`, `countries[]`, `groups[]` y opcionalmente `constrained[]` por disciplina. En `sorteo-grupos-op1.html` cada país también tiene `team` con el nombre del equipo Repsol asignado. |
 | `shuffle(arr)` | Fisher-Yates. Usado para todas las disciplinas sin restricción. |
 | `getConstrainedShuffle(cfg)` | Sorteo fixture-aware para disciplinas con `constrained`. Para Pádel: divide los 4 especiales en 2+2 entre grupos, luego asigna cada par a una posición de slot que **solo juega en Fecha 2** (`{1,5}·{2,3}·{2,4}·{3,5}·{4,5}`), elegida al azar. Los países normales rellenan los 3 slots restantes de cada grupo. Garantiza que los 4 especiales no se enfrenten en Fecha 1. |
-| `renderCountriesPreview(cfg)` | Muestra la grilla de banderas de la disciplina activa. |
+| `renderCountriesPreview(cfg)` | Muestra la grilla de banderas + nombre de país de la disciplina activa. |
 | `renderEmpty(cfg)` | Renderiza los grupos con slots vacíos mostrando solo la etiqueta de posición. |
-| `doSort()` | Lanza la animación de sorteo. Llama a `getConstrainedShuffle` si `cfg.constrained` existe, o `shuffle` en caso contrario. Implementación de animación difiere por variante. |
-| `doReset()` | Restaura el estado inicial: preview de países + slots vacíos. |
+| `doSort()` | Lanza la animación de sorteo. Llama a `getConstrainedShuffle` si `cfg.constrained` existe, o `shuffle` en caso contrario. Al terminar llama a `recordSort()`. |
+| `doReset()` | Restaura el estado inicial: preview de países + slots vacíos. No borra el historial de sorteos. |
 | `setControls(disabled)` | Bloquea/desbloquea select y botones durante la animación. |
 | `flagError(img)` | Mismo patrón que sorteo-paises.js: SVG placeholder inline para banderas rotas. |
+
+**Funciones exclusivas de `sorteo-grupos-op1.html` (historial y navegación):**
+
+| Función | Descripción |
+|---|---|
+| `recordSort(cfgKey, slots, shuffled)` | Registra el resultado completo del sorteo en `sortHistory` (`{ n, label, cfgKey, slots[], shuffled[] }`), incrementa `sortCount` y actualiza `currentView`. |
+| `renderCounterUI()` | Dibuja el badge `Sorteo #N` y los chips de historial (últimos 5). Cada chip tiene `onclick="viewSorteo(idx)"`. El chip activo se resalta en cian. |
+| `renderSlots(entry)` | Re-renderiza los grupos con el resultado guardado de un sorteo anterior: llama a `renderEmpty()`, rellena cada slot-back con bandera + país + equipo y aplica la clase `flipped`. También actualiza el título de impresión y el botón PDF. |
+| `viewSorteo(idx)` | Navega a un sorteo del historial: actualiza `currentView`, llama a `renderSlots()` y `renderCounterUI()`. Bloqueado si `busy === true`. |
+
+**Estado global del historial (`sorteo-grupos-op1.html`):**
+
+```js
+let sortCount   = 0;        // Contador total de sorteos (nunca baja)
+let currentView = -1;       // Índice en sortHistory del sorteo que se muestra
+const sortHistory = [];     // Array de { n, label, cfgKey, slots[], shuffled[] }
+```
+
+> El historial vive solo en memoria (se pierde al recargar la página). Los chips muestran los últimos 5 sorteos; los anteriores siguen en `sortHistory` y son accesibles si se actualiza `renderCounterUI`.
 
 ---
 
@@ -342,23 +361,64 @@ Objeto `CONFIG` embebido en el JS de cada archivo. Estructura de cada entrada:
 {
   label: String,          // Nombre visible en la UI
   countries: [            // Países que participan (mismo orden no importa, se barajan)
-    { name: String, code: String }  // code = código ISO para flagcdn.com
+    { name: String, code: String, team: String }
+    // name = nombre del país | code = código ISO para flagcdn.com | team = nombre del equipo Repsol asignado (opcional)
   ],
   groups: [               // Definición de grupos
     { name: String, prefix: String, size: Number }
-    // name: "GRUPO A" | prefix: letra del slot ("A", "B", "F"…) | size: cantidad de slots
+    // name: "GRUPO A" | prefix: letra del slot ("A", "B"…) | size: cantidad de slots
   ],
   constrained: [String]   // OPCIONAL. Códigos ISO de países con restricción de fixture.
                           // Si está presente, se usa getConstrainedShuffle() en lugar de shuffle().
 }
 ```
 
+> El campo `team` existe en las 4 disciplinas reales de `sorteo-grupos-op1.html`. La disciplina PRUEBA no lo tiene. Cuando `team` está presente, el slot resultado muestra: bandera + nombre del país (atenuado) + nombre del equipo (negrita). La preview de países muestra solo bandera + nombre del país.
+
 | Disciplina | Grupos | Slots | Países |
 |---|---|---|---|
 | Fútbol Masculino | A, B, C | A1–A3, B1–B3, C1–C3 | Francia, España, Argentina, Inglaterra, Brasil, Portugal, Marruecos, Países Bajos, Ecuador |
-| Fútbol Femenino | A (prefix F) | F1, F2, F3 | Bélgica, Alemania, Colombia |
+| Fútbol Femenino | A | A1, A2, A3 | Bélgica, Alemania, Colombia |
 | Vóley Mixto | A, B | A1–A5, B1–B5 | Croacia, Uruguay, Suiza, México, EEUU, Japón, Senegal, Irán, Corea del Sur, Perú |
 | Pádel | A, B | A1–A5, B1–B5 | Austria, Canadá, Australia, Noruega, Panamá, Arabia Saudita, Paraguay, Suecia, Egipto, Turquía |
+| PRUEBA *(solo op1)* | A, B, C | A1–A3, B1–B3, C1–C3 | Italia, China, India, Sudáfrica, Nigeria, Polonia, Dinamarca, Chile, Nueva Zelanda |
+
+**Mapeo país → equipo (sorteo-grupos-op1.html):**
+
+| País | Equipo | Disciplina |
+|---|---|---|
+| Países Bajos | Movilidad con ALMA FC | Fútbol Masculino |
+| Argentina | Real Blending F.C. | Fútbol Masculino |
+| Inglaterra | Atlético Octano | Fútbol Masculino |
+| Brasil | Los Ejecutores | Fútbol Masculino |
+| España | Alto Octanaje FC | Fútbol Masculino |
+| Portugal | Real E&P | Fútbol Masculino |
+| Marruecos | Supply & Trading | Fútbol Masculino |
+| Francia | CFO | Fútbol Masculino |
+| Ecuador | Los Re-Finos F.C. | Fútbol Masculino |
+| Alemania | Energía Femenina | Fútbol Femenino |
+| Bélgica | Motomamis FC | Fútbol Femenino |
+| Colombia | Focus Mode FC | Fútbol Femenino |
+| Croacia | Bloque técnico | Vóley Mixto |
+| Corea del Sur | Bloqueo 57 | Vóley Mixto |
+| México | Octanaje Implacable | Vóley Mixto |
+| Uruguay | Servicios Globales | Vóley Mixto |
+| Irán | Repsolitos Pyoneros | Vóley Mixto |
+| Japón | Energía 360 | Vóley Mixto |
+| Perú | Energizados Pampilla | Vóley Mixto |
+| Senegal | Latinita Repsol | Vóley Mixto |
+| EEUU | Pampilla Lovers | Vóley Mixto |
+| Suiza | Repvol | Vóley Mixto |
+| Austria | Bicampeones | Pádel |
+| Turquía | Doble Energía Pampilla | Pádel |
+| Paraguay | El dúo de la historia | Pádel |
+| Egipto | Los doble falta | Pádel |
+| Australia | Par técnico | Pádel |
+| Suecia | Henry Cup | Pádel |
+| Panamá | Dúo dinamita | Pádel |
+| Noruega | Torres gemelas | Pádel |
+| Canadá | Six-Seven | Pádel |
+| Arabia Saudita | One CYC | Pádel |
 
 **Restricción especial de Pádel:** Austria, Egipto, Canadá y Turquía están declarados en `constrained: ['at','eg','ca','tr']`. El sorteo garantiza que ninguno de estos 4 países se enfrente entre sí en **Fecha 1**. Ver `getConstrainedShuffle` en sección 4.
 
@@ -371,7 +431,7 @@ Las banderas usan `https://flagcdn.com/w80/{codigo-iso}.png` (tamaño más peque
 | Archivo | Animación | Estado |
 |---|---|---|
 | `sorteo-grupos.html` | **Tarjetas volantes** — las banderas se despegan de la grilla, vuelan al centro caóticamente y luego cada una aterriza en su slot disparando el flip 3D | Versión activa |
-| `sorteo-grupos-op1.html` | **Ruleta** — todos los slots giran simultáneamente con banderas en bucle rápido, luego se frenan y bloquean uno a uno con flip de confirmación | Variante de comparación |
+| `sorteo-grupos-op1.html` | **Ruleta** — todos los slots giran simultáneamente con banderas en bucle rápido, luego se frenan y bloquean uno a uno con flip de confirmación. Incluye: disciplina **PRUEBA** (9 equipos, 3 grupos) para demostrar aleatoriedad; resultado muestra bandera + país + equipo; botón "Guardar como PDF"; **contador de sorteos con historial navegable** (chips clickeables para volver a ver e imprimir cualquier resultado anterior de la sesión). | Variante de comparación |
 | `sorteo-grupos-op3.html` | **Cuenta regresiva** — overlay oscuro con 3→2→1 animado, destello "¡SORTEO!" y confeti (90 partículas), luego reveals escalonados con flip | Variante de comparación |
 
 Para elegir una variante como definitiva: renombrar el archivo elegido a `sorteo-grupos.html` (o actualizar los enlaces que apunten a él).

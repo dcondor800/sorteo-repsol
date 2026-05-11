@@ -166,6 +166,52 @@
     }
     #btn-pdf:hover { box-shadow: 0 6px 20px rgba(74,222,128,0.5); }
 
+    .sort-counter {
+      max-width: 1100px;
+      margin: 14px auto 0;
+      padding: 0 24px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .sort-counter-badge {
+      background: rgba(0,188,212,0.12);
+      border: 1.5px solid rgba(0,188,212,0.35);
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--accent);
+      letter-spacing: 0.3px;
+    }
+    .sort-counter-history {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .sort-counter-chip {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .sort-counter-chip:hover {
+      background: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.75);
+    }
+    .sort-counter-chip.current {
+      background: rgba(0,188,212,0.12);
+      border-color: rgba(0,188,212,0.4);
+      color: rgba(255,255,255,0.9);
+    }
+
     .print-header { display: none; }
 
     @media print {
@@ -247,6 +293,11 @@
       <button id="btn-sort"  class="btn btn-primary">Sortear</button>
       <button id="btn-reset" class="btn btn-secondary">Reset</button>
     </div>
+  </div>
+
+  <div id="sort-counter" class="sort-counter">
+    <span id="sort-counter-badge" class="sort-counter-badge">Sorteo #1</span>
+    <div id="sort-counter-history" class="sort-counter-history"></div>
   </div>
 
   <div class="countries-section">
@@ -441,6 +492,56 @@
     }
 
     let busy = false;
+    let sortCount  = 0;
+    let currentView = -1;
+    const sortHistory = []; // { n, label, cfgKey, slots[], shuffled[] }
+
+    function renderCounterUI() {
+      document.getElementById('sort-counter').style.display = 'flex';
+      const entry = sortHistory[currentView];
+      document.getElementById('sort-counter-badge').textContent = `Sorteo #${entry.n}`;
+
+      const start = Math.max(0, sortHistory.length - 5);
+      document.getElementById('sort-counter-history').innerHTML = sortHistory.slice(start).map((h, i) => {
+        const idx   = start + i;
+        const active = idx === currentView ? 'current' : '';
+        return `<span class="sort-counter-chip ${active}" onclick="viewSorteo(${idx})">#${h.n} ${h.label}</span>`;
+      }).join('');
+    }
+
+    function renderSlots(entry) {
+      const cfg = CONFIG[entry.cfgKey];
+      renderEmpty(cfg);
+      entry.slots.forEach((pos, j) => {
+        const country = entry.shuffled[j];
+        const slotEl  = document.getElementById(`slot-${pos}`);
+        slotEl.querySelector('.slot-back').innerHTML =
+          `<span class="pos">${pos}</span>
+           <span class="sep">—</span>
+           <img class="flag" src="${FLAG_CDN(country.code)}" alt="${country.name}" onerror="flagError(this)">
+           <div class="slot-text">
+             <span class="country-name">${country.name}</span>
+             ${country.team ? `<span class="team-name">${country.team}</span>` : ''}
+           </div>`;
+        slotEl.classList.add('flipped');
+      });
+      document.querySelector('.print-header').textContent = `Sorteo por Grupos — ${cfg.label} — Sorteo #${entry.n}`;
+      document.getElementById('btn-pdf').style.display = 'inline-block';
+    }
+
+    function viewSorteo(idx) {
+      if (busy || idx === currentView) return;
+      currentView = idx;
+      renderSlots(sortHistory[idx]);
+      renderCounterUI();
+    }
+
+    function recordSort(cfgKey, slots, shuffled) {
+      sortCount++;
+      sortHistory.push({ n: sortCount, label: CONFIG[cfgKey].label, cfgKey, slots: [...slots], shuffled: [...shuffled] });
+      currentView = sortHistory.length - 1;
+      renderCounterUI();
+    }
 
     function doSort() {
       if (busy) return;
@@ -450,6 +551,7 @@
         Array.from({ length: g.size }, (_, i) => `${g.prefix}${i + 1}`)
       );
 
+      recordSort(document.getElementById('sel-cat').value, slots, shuffled);
       renderEmpty(cfg);
       busy = true;
       setControls(true);
